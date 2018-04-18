@@ -9,9 +9,15 @@ class SearchForm(forms.Form):
         ('EQUALS', 'EQUALS'),
         ('DOES NOT EQUAL', 'DOES NOT EQUAL')
                          )
+
+    AND_OR_CHOICES = (
+        ('AND', 'AND'),
+        ('OR', 'OR')
+    )
     search_attribute = forms.CharField(label='Search term', max_length=100)
     search_item = forms.CharField(label='Search term', max_length=100)
     operation = forms.ChoiceField(choices=OPERATION_CHOICES)
+    combine_choice = forms.ChoiceField(choices=AND_OR_CHOICES)
 
 
 class BaseSearchFormSet(BaseFormSet):
