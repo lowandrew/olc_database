@@ -1,6 +1,36 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
 {% block content %}
   <br>
-  <h1> Query Wizard will go here</h1>
-  <button class="btn btn-primary">I'm a useless button</button>
+  <style>
+  .add-row {
+    color: #191b80;
+  }
+  .delete-row {
+    color:red;
+    margin-right: 0.3em;
+  }
+  </style>
+  <h1>Query Wizard will go here</h1>
+  <form method="post">
+  {% csrf_token %}
+  {{ search_formset.management_form }}
+  {% for search_form in search_formset %}
+    <div class="search-formset">
+    {{ search_form.search_attribute }}
+    {{ search_form.operation }}
+    {{ search_form.search_item }}
+    </div>
+  {% endfor %}
+  <button type="submit" class="btn btn-primary">Do something</button>
+  </form>
+  <!-- Include formset plugin - including jQuery dependency -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="{% static 'js/jquery.formset.js' %}"></script>
+    <script>
+        $('.search-formset').formset({
+            addText: 'Add another search term',
+            deleteText: 'remove'
+    });
+    </script>
 {% endblock %}
