@@ -1,7 +1,13 @@
+from dal import autocomplete
 from django.shortcuts import render
 from data_wrapper.models import LSTSData, Sample, SeqData
-from data_wrapper.forms import SearchForm, BaseSearchFormSet
+from .forms import SearchForm, BaseSearchFormSet
 from django.forms.formsets import formset_factory
+
+
+class AttributeAutocompleteFromList(autocomplete.Select2ListView):
+    def get_list(self):
+        return make_list_of_fields()
 
 
 # Create your views here.
@@ -11,8 +17,6 @@ def query_builder(request):
     attributes = list()
     combine_operations = list()
     SearchFormSet = formset_factory(SearchForm, formset=BaseSearchFormSet)
-    acceptable_fields = make_set_of_fields()
-    print(acceptable_fields)
     if request.method == 'POST':
         search_formset = SearchFormSet(request.POST)
         if search_formset.is_valid():
@@ -21,10 +25,6 @@ def query_builder(request):
                 attributes.append(search_form.cleaned_data.get('search_attribute'))
                 operations.append(search_form.cleaned_data.get('operation'))
                 combine_operations.append(search_form.cleaned_data.get('combine_choice'))
-            print(attributes)
-            print(operations)
-            print(terms)
-            print(combine_operations)
     else:
         search_formset = SearchFormSet()
     return render(request,
@@ -35,7 +35,6 @@ def query_builder(request):
                   )
 
 
-# These should most likely end up not in my view eventually.
 def get_model_fields(model):
     fields = list()
     for field in model._meta.fields:
@@ -44,12 +43,16 @@ def get_model_fields(model):
     return fields
 
 
-def make_set_of_fields():
-    fields = set()
+def make_list_of_fields():
+    fields = list()  # Would use a set here, but django-autocomplete-light wants a list.
     for field in get_model_fields(LSTSData):
-        fields.add(field)
+        if field not in fields:
+            fields.append(field)
     for field in get_model_fields(SeqData):
-        fields.add(field)
+        if field not in fields:
+            fields.append(field)
     for field in get_model_fields(Sample):
-        fields.add(field)
+        if field not in fields:
+            fields.append(field)
     return fields
+

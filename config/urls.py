@@ -21,7 +21,7 @@ urlpatterns = [
     ),
     url(r"^accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
-    url(r'data_wrapper/', include('olc_database.data_wrapper.urls', namespace='data_wrapper'))
+    url(r'data_wrapper/', include('olc_database.data_wrapper.urls', namespace='data_wrapper')),
 ] + static(
     settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
 )

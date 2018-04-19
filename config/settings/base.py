@@ -59,6 +59,9 @@ DJANGO_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # 'django.contrib.humanize', # Handy template tags
+    'dal',
+    'dal_select2',  # These two claim they should go before the admin or some sort of static file reason.
+    # 'dal_queryset_sequence',
     'django.contrib.admin',
 ]
 THIRD_PARTY_APPS = [
