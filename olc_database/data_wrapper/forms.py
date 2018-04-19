@@ -57,10 +57,10 @@ class SearchForm(forms.Form):
     helper.form_class = 'form-horizontal'
     helper.layout = Layout(
         Row(
-            Div('search_attribute', css_class='col-sm-1', style='width:100px'),
+            Div('search_attribute', css_class='col-sm-4',),
             Div('operation', css_class='col-sm-2'),
-            Div('search_item', css_class='col-sm-3'),
-            Div('combine_choice', css_class='col-sm-4'),
+            Div('search_item', css_class='col-sm-2'),
+            Div('combine_choice', css_class='col-sm-2'),
         )
     )
     helper.form_show_labels = False
