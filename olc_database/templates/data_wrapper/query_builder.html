@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load staticfiles %}
-{% load static %}
+{% load crispy_forms_tags %}
 {% block content %}
   <br>
   <style>
@@ -9,22 +9,24 @@
   }
   .delete-row {
     color:red;
-    margin-right: 0.3em;
+  }
+  .search-formset {
+    margin: auto;
   }
   </style>
-  <h1>Query Wizard will go here</h1>
+  <h2>Welcome to the Query Wizard! Create your query below.</h2>
+  <br>
   <form method="post">
   {% csrf_token %}
   {{ search_formset.management_form }}
   {% for search_form in search_formset %}
-    <div class="search-formset">
-    {{ search_form.search_attribute }}
-    {{ search_form.operation }}
-    {{ search_form.search_item }}
-    {{ search_form.combine_choice }}
+    <div class="search-formset" style="margin:auto">
+    {% crispy search_form %}
     </div>
   {% endfor %}
-  <button type="submit" class="btn btn-primary">Do something</button>
+  <br>
+  <br>
+  <button type="submit" class="btn btn-outline-primary btn-block">Run Query</button>
   </form>
   <!-- Include formset plugin - including jQuery dependency -->
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
