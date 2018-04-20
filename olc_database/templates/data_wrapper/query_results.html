@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block content %}
+  <br>
+  <h2>Query Results</h2>
+  <p>Your query returned the following SEQIDs:</p>
+  <table id="seqid-table" class="table table-hover table-bordered">
+  <thead>
+    <tr>
+      <td>SEQID</td>
+    </tr>
+  </thead>
+  <tbody>
+    {% for seqid in seqids %}
+      <tr>
+        <td>{{ seqid }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  </table>
+  <br>
+  <a href="{% url 'data_wrapper:query_builder' %}" class="btn btn-dark" role="button" aria-pressed="true">Return to Query Builder</a>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.4/css/jquery.dataTables.min.css">
+  <script type="text/javascript">
+      $(document).ready( function () {
+        $.noConflict();  // For some reason datatable won't load until I add this, which the internet says is because
+        // I have multiple versions of jQuery present somehow. However, when I don't have jQuery loaded here,
+        // I get an error saying that jQuery isn't present when I try to use datatables. Go figure.
+        $('#seqid-table').dataTable();
+      });
+  </script>
+{% endblock %}
