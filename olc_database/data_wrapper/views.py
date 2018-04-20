@@ -1,7 +1,9 @@
 from dal import autocomplete
+from django_tables2 import RequestConfig
 from django.shortcuts import render
 from data_wrapper.models import LSTSData, Sample, SeqData
 from .forms import SearchForm, BaseSearchFormSet
+from .tables import SeqDataTable
 from django.forms.formsets import formset_factory
 
 
@@ -56,6 +58,16 @@ def query_builder(request):
 def query_results(request):
     return render(request,
                   'data_wrapper/query_results.html')
+
+
+def seqdata_table(request):
+    table = SeqDataTable(SeqData.objects.filter())
+    RequestConfig(request).configure(table)
+    return render(request,
+                  'data_wrapper/seqdata_table.html',
+                  {
+                      'table': table
+                  })
 
 
 def decipher_input_request(attributes, operations, terms, combine_operations):

@@ -70,6 +70,7 @@ THIRD_PARTY_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'rest_framework',
+    'django_tables2',
 ]
 LOCAL_APPS = [
     'olc_database.users.apps.UsersConfig',
