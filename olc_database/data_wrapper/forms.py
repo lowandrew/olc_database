@@ -2,9 +2,6 @@ from django import forms
 from dal import autocomplete
 from django.forms.formsets import BaseFormSet
 from data_wrapper.models import LSTSData, Sample, SeqData
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field, Fieldset
-from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
 
 def get_model_fields(model):
@@ -49,21 +46,15 @@ class SearchForm(forms.Form):
     search_attribute = autocomplete.Select2ListChoiceField(choice_list=make_list_of_fields,
                                                            widget=autocomplete.ListSelect2(url='data_wrapper:attribute-autocomplete'),
                                                            required=True)
-    search_item = forms.CharField(label='Search term', max_length=100, required=True)
-    operation = forms.ChoiceField(choices=OPERATION_CHOICES)
+    search_item = forms.CharField(label='Search term', max_length=100, required=False)
+    operation = forms.ChoiceField(choices=OPERATION_CHOICES,
+                                  widget=forms.Select(attrs={
+                                      'class': 'operation_choice'
+                                  }))
     combine_choice = forms.ChoiceField(choices=AND_OR_CHOICES)
-
-    helper = FormHelper()
-    helper.form_class = 'form-horizontal'
-    helper.layout = Layout(
-        Row(
-            Div('search_attribute', css_class='col-sm-4',),
-            Div('operation', css_class='col-sm-2'),
-            Div('search_item', css_class='col-sm-2'),
-            Div('combine_choice', css_class='col-sm-2'),
-        )
-    )
-    helper.form_show_labels = False
+    date_input = forms.DateField(widget=forms.TextInput(attrs={
+        'class': 'datepicker'
+    }), required=False)
 
 
 class BaseSearchFormSet(BaseFormSet):

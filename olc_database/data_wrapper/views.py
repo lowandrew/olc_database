@@ -21,16 +21,28 @@ def query_builder(request):
         search_formset = SearchFormSet(request.POST)
         if search_formset.is_valid():
             for search_form in search_formset:
-                terms.append(search_form.cleaned_data.get('search_item'))
+                if search_form.cleaned_data.get('date_input'):
+                    terms.append(search_form.cleaned_data.get('date_input'))
+                else:
+                    terms.append(search_form.cleaned_data.get('search_item'))
                 attributes.append(search_form.cleaned_data.get('search_attribute'))
                 operations.append(search_form.cleaned_data.get('operation'))
                 combine_operations.append(search_form.cleaned_data.get('combine_choice'))
             seqids = decipher_input_request(attributes, operations, terms, combine_operations)
-            return render(request,
-                          'data_wrapper/query_results.html',
-                          {
-                              'seqids': seqids
-                          })
+            if len(seqids) == 1 and 'ERROR' in seqids[0]:
+                return render(request,
+                              'data_wrapper/query_builder.html',
+                              {
+                                 'search_formset': search_formset,
+                                 'error_msg': seqids[0]
+                              })
+            else:
+                return render(request,
+                              'data_wrapper/query_results.html',
+                              {
+                                  'seqids': seqids
+                              })
+
     else:
         search_formset = SearchFormSet()
     return render(request,
@@ -47,6 +59,8 @@ def query_results(request):
 
 
 def decipher_input_request(attributes, operations, terms, combine_operations):
+    # NOTE: This may not be a good way to do things at all, but as a proof of concept it seems to work.
+    # TODO: Become a database expert so you know if this is actually a good idea.
     samples = Sample.objects.all()
     for i in range(len(attributes)):
         # Step 1: Find which model/field we're pulling stuff from.
@@ -67,14 +81,29 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
         elif operations[i] == 'CONTAINS':
             queryset = queryset.filter(**{fieldname + '__icontains': terms[i]})
         elif operations[i] == 'GREATER THAN':
-            queryset = queryset.filter(**{fieldname + '__gt': terms[i]})
+            # Make sure user has entered an int. If they haven't, they'll get told that they messed up with a nice
+            # error message.
+            try:
+                term_as_integer = int(terms[i])
+            except ValueError:
+                return ['ERROR: When using a greater than or less than operation, you must enter a number.'
+                        ' Please try again.']
+            queryset = queryset.filter(**{fieldname + '__gt': term_as_integer})
         elif operations[i] == 'LESS THAN':
-            queryset = queryset.filter(**{fieldname + '__lt': terms[i]})
+            try:
+                term_as_integer = int(terms[i])
+            except ValueError:
+                return ['ERROR: When using a greater than or less than operation, you must enter a number.'
+                        ' Please try again.']
+            queryset = queryset.filter(**{fieldname + '__lt': term_as_integer})
+        elif operations[i] == 'BEFORE':
+            queryset = queryset.filter(**{fieldname + '__date__lt': terms[i]})
+        elif operations[i] == 'AFTER':
+            queryset = queryset.filter(**{fieldname + '__date__gt': terms[i]})
 
         queryset_seqids = list()
         for item in queryset:
             queryset_seqids.append(str(item.seqid))
-        print(queryset_seqids)
         for sample in samples:
             if sample.seqid not in queryset_seqids:
                 samples = samples.exclude(seqid=sample.seqid)

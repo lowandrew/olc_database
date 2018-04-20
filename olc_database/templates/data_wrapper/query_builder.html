@@ -15,13 +15,37 @@
   }
   </style>
   <h2>Welcome to the Query Wizard! Create your query below.</h2>
+  {% if error_msg %}
+    <br>
+    <div class="alert alert-danger">
+        {{ error_msg }}
+    </div>
+  {% endif %}
   <br>
   <form method="post">
   {% csrf_token %}
   {{ search_formset.management_form }}
   {% for search_form in search_formset %}
-    <div class="search-formset" style="margin:auto">
-    {% crispy search_form %}
+    <div class="search-formset">
+      {# Adding in the form errors makes the page very ugly. TODO: Fix at some point soon, maybe with crispy again #}
+      {{ search_form.search_attribute }}
+{#      {% if search_form.search_attribute.errors %}#}
+{#          <div class="alert alert-danger" style="width:300px">#}
+{#              {{ search_form.search_attribute.errors }}#}
+{#          </div>#}
+{#      {% endif %}#}
+      {{ search_form.operation }}
+      {% if search_form.operation.value == 'BEFORE' or search_form.operation.value == 'AFTER' %}
+        {{ search_form.date_input }}
+      {% else %}
+        {{ search_form.search_item }}
+      {% endif %}
+{#      {% if search_form.search_item.errors %}#}
+{#        <div class="alert alert-danger" style="width:300px">#}
+{#          {{ search_form.search_item.errors }}#}
+{#        </div>#}
+{#      {% endif %}#}
+      {{ search_form.combine_choice }}
     </div>
   {% endfor %}
   <br>
@@ -31,13 +55,26 @@
   <!-- Include formset plugin - including jQuery dependency -->
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="{% static 'js/jquery.formset.js' %}"></script>
-    <script>
+    <script> // Allows adding and removal of formsets
         $('.search-formset').formset({
             addText: 'Add another search term',
             deleteText: 'remove'
     });
     </script>
+     <script>  // Implements our datepicker.
+      $( function() {
+         $.noConflict();
+        $( ".datepicker" ).datepicker();
+      } );
+     </script>
+     <script> // Monitors our operation choice selector, and loads datepicker if selector is date-related (before/after)
+     // This only works on the first form loaded right now, more user added ones aren't picked up.
+        $('.operation_choice').change(function () {
+            console.log('Changed operation choice')
+        })
+     </script>
   <!-- Make the autocomplete form work. Apparently putting it in the footer causes some conflict with base.html, and I have
   no idea why, so it goes here --!>
   {% for search_form in search_formset %}

@@ -14,7 +14,7 @@ class SeqData(models.Model):
     n50 = models.IntegerField()
     num_contigs = models.IntegerField()
     rmlst = models.CharField(max_length=56)
-    date_sequenced = models.DateField()
+    date_sequenced = models.DateTimeField()
 
 
 class LSTSData(models.Model):
