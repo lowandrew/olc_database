@@ -4,5 +4,15 @@
 {% block content %}
   <br>
   <h2>Details for Query <strong>{{ query }}</strong></h2>
-  <p>Query details will go here.</p>
+  <br><br>
+  <table class="table-hover table table-bordered">
+
+    <tbody>
+      {% for detail in query_detail_list %}
+        <tr>
+          <td>{{ detail }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% endblock %}

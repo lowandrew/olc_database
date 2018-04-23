@@ -113,14 +113,25 @@ def rerun_query(request, query_id):
                       'seqids': seqids
                   })
 
+
 @login_required
 def query_details(request, query_id):
     query = get_object_or_404(SavedQueries, pk=query_id)
+    query_detail_list = list()
+    for i in range(len(query.search_terms)):
+        if i < len(query.search_terms) - 1:
+            query_detail_list.append(query.search_attributes[i] + ' ' + query.search_operations[i] +
+                                     ' ' + query.search_terms[i] + ' ' + query.search_combine_operations[i])
+        else:
+            query_detail_list.append(query.search_attributes[i] + ' ' + query.search_operations[i] +
+                                     ' ' + query.search_terms[i])
     return render(request,
                   'data_wrapper/query_details.html',
                   {
-                      'query': query
+                      'query': query,
+                      'query_detail_list': query_detail_list
                   })
+
 
 def query_results(request):
     return render(request,
