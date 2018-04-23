@@ -17,6 +17,10 @@ class SavedQueries(models.Model):
     search_attributes = ArrayField(models.CharField(max_length=48))
     search_operations = ArrayField(models.CharField(max_length=48))
     search_combine_operations = ArrayField(models.CharField(max_length=48))
+    query_name = models.CharField(max_length=256)
+
+    def __str__(self):
+        return self.query_name
 
 
 

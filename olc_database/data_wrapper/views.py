@@ -1,6 +1,6 @@
 from dal import autocomplete
 from django_tables2 import RequestConfig
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries
 from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm
 from .tables import SeqDataTable
@@ -40,12 +40,6 @@ def query_builder(request):
                 operations.append(search_form.cleaned_data.get('operation'))
                 combine_operations.append(search_form.cleaned_data.get('combine_choice'))
             seqids = decipher_input_request(attributes, operations, terms, combine_operations)
-            if save_query == 'Yes':
-                SavedQueries.objects.create(user=request.user,
-                                            search_terms=terms,
-                                            search_attributes=attributes,
-                                            search_operations=operations,
-                                            search_combine_operations=combine_operations)
             if len(seqids) == 1 and 'ERROR' in seqids[0]:
                 return render(request,
                               'data_wrapper/query_builder.html',
@@ -55,6 +49,13 @@ def query_builder(request):
                                  'save_query_form': save_query_form
                               })
             else:
+                if save_query == 'Yes':
+                    SavedQueries.objects.create(user=request.user,
+                                                search_terms=terms,
+                                                search_attributes=attributes,
+                                                search_operations=operations,
+                                                search_combine_operations=combine_operations,
+                                                query_name=query_name)
                 return render(request,
                               'data_wrapper/query_results.html',
                               {
@@ -71,6 +72,55 @@ def query_builder(request):
                   },
                   )
 
+
+@login_required
+def saved_queries(request):
+    saved_queries = SavedQueries.objects.filter(user=request.user)
+    return render(request,
+                  'data_wrapper/saved_queries.html',
+                  {'saved_queries': saved_queries}
+                  )
+
+
+@login_required
+def delete_query_confirm(request, query_id):
+    query = get_object_or_404(SavedQueries, pk=query_id)
+    return render(request,
+                  'data_wrapper/delete_query_confirm.html',
+                  {
+                      'query': query
+                  }
+                  )
+
+
+@login_required
+def delete_query(request, query_id):
+    query = get_object_or_404(SavedQueries, pk=query_id)
+    query.delete()
+    return redirect('data_wrapper:saved_queries')
+
+
+@login_required
+def rerun_query(request, query_id):
+    query = get_object_or_404(SavedQueries, pk=query_id)
+    seqids = decipher_input_request(attributes=query.search_attributes,
+                                    operations=query.search_operations,
+                                    terms=query.search_terms,
+                                    combine_operations=query.search_combine_operations)
+    return render(request,
+                  'data_wrapper/query_results.html',
+                  {
+                      'seqids': seqids
+                  })
+
+@login_required
+def query_details(request, query_id):
+    query = get_object_or_404(SavedQueries, pk=query_id)
+    return render(request,
+                  'data_wrapper/query_details.html',
+                  {
+                      'query': query
+                  })
 
 def query_results(request):
     return render(request,
