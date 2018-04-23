@@ -13,6 +13,8 @@ urlpatterns = [
     url(r'^delete_query/(?P<query_id>\d+)/$', views.delete_query, name='delete_query'),
     url(r'^rerun_query/(?P<query_id>\d+)/$', views.rerun_query, name='rerun_query'),
     url(r'^query_details/(?P<query_id>\d+)/$', views.query_details, name='query_details'),
+    url(r'^edit_data_resfinder/(?P<resfinder_id>\d+)/$', views.edit_data_resfinder, name='edit_data_resfinder'),
+    url(r'^edit_data_seqdata/(?P<seqdata_id>\d+)/$', views.edit_data_seqdata, name='edit_data_seqdata'),
     url(r'^attribute-autocomplete/$',
         AttributeAutocompleteFromList.as_view(),
         name='attribute-autocomplete'),

@@ -2,7 +2,7 @@ from dal import autocomplete
 from django_tables2 import RequestConfig
 from django.shortcuts import render, get_object_or_404, redirect
 from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries
-from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm
+from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm
 from .tables import SeqDataTable
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
@@ -78,7 +78,8 @@ def saved_queries(request):
     saved_queries = SavedQueries.objects.filter(user=request.user)
     return render(request,
                   'data_wrapper/saved_queries.html',
-                  {'saved_queries': saved_queries}
+                  {'saved_queries': saved_queries,
+                   }
                   )
 
 
@@ -92,6 +93,41 @@ def delete_query_confirm(request, query_id):
                   }
                   )
 
+
+@login_required
+def edit_data_resfinder(request, resfinder_id):
+    resfinder_data = get_object_or_404(ResFinderData, pk=resfinder_id)
+    resfinder_form = ResFinderDataForm(instance=resfinder_data)
+    if request.method == 'POST':
+        resfinder_form = ResFinderDataForm(request.POST, instance=resfinder_data)  # Do I have to call the post twice? Maybe?
+        if resfinder_form.is_valid():
+            # r = ResFinderDataForm(request.POST, instance=resfinder_data)
+            resfinder_form.save()
+            return render(request,
+                          'data_wrapper/saved_queries.html')
+    else:
+        return render(request,
+                      'data_wrapper/edit_data_resfinder.html',
+                      {'resfinder_form': resfinder_form},
+                      )
+
+
+@login_required
+def edit_data_seqdata(request, seqdata_id):
+    seqdata = get_object_or_404(SeqData, pk=seqdata_id)
+    seqdata_form = SeqDataForm(instance=seqdata)
+    if request.method == 'POST':
+        seqdata_form = SeqDataForm(request.POST)
+        if seqdata_form.is_valid():
+            s = SeqDataForm(request.POST, instance=seqdata)
+            s.save()
+            return render(request,
+                          'data_wrapper/seqdata_table.html')
+    else:
+        return render(request,
+                      'data_wrapper/edit_data_seqdata.html',
+                      {'seqdata_form': seqdata_form},
+                      )
 
 @login_required
 def delete_query(request, query_id):

@@ -23,7 +23,6 @@ class SavedQueries(models.Model):
         return self.query_name
 
 
-
 class SeqData(models.Model):
     seqid = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='seqdata')
     genus = models.CharField(max_length=128)

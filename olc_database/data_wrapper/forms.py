@@ -22,6 +22,18 @@ def make_list_of_fields():
     return fields
 
 
+class ResFinderDataForm(forms.ModelForm):
+    class Meta:
+        model = ResFinderData
+        fields = get_model_fields(ResFinderData)
+
+
+class SeqDataForm(forms.ModelForm):
+    class Meta:
+        model = SeqData
+        fields = get_model_fields(SeqData)
+
+
 class SearchForm(forms.Form):
     OPERATION_CHOICES = (
         ('CONTAINS', 'CONTAINS'),
