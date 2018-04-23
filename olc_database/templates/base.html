@@ -65,11 +65,9 @@
               </li>
             {% else %}
               <li class="nav-item">
-                 URL provided by django-allauth/account/urls.py
                 <a id="sign-up-link" class="nav-link" href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a>
               </li>
               <li class="nav-item">
-                 URL provided by django-allauth/account/urls.py
                 <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">{% trans "Sign In" %}</a>
               </li>
             {% endif %}
@@ -89,8 +87,11 @@
 
       {% block content %}
         <br><br>
-        <p>This project will eventually be a nice user interface for a database containing OLC's sequences and
-        associated metadata.</p>
+        <a class="btn btn-info" href="{% url 'data_wrapper:seqdata_table' %}">View Sequence Data</a>
+        <br>
+        <br>
+        <a class="btn btn-info" href="{% url 'data_wrapper:resfinderdata_table' %}">View ResFinder Data</a>
+
       {% endblock content %}
 
     </div> <!-- /container -->

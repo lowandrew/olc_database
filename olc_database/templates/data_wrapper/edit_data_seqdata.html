@@ -6,8 +6,10 @@
   <h2>This is where we'll edit data for SEQDATA</h2>
   <form action="" method="post">
       {% csrf_token %}
-      {{ seqdata_form.as_table }}
+      {{ seqdata_form.as_p }}
     <br>
       <button type="submit" class="btn btn-primary">Save Changes</button>
   </form>
+  <br>
+  <a href="{% url 'data_wrapper:seqdata_table' %}" class="btn btn-dark" role="button" aria-pressed="true">Return to SeqData Table</a>
 {% endblock %}

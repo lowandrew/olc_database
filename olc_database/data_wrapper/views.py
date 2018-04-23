@@ -1,9 +1,10 @@
 from dal import autocomplete
 from django_tables2 import RequestConfig
+from django_tables2.columns import TemplateColumn
 from django.shortcuts import render, get_object_or_404, redirect
 from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries
 from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm
-from .tables import SeqDataTable
+from .tables import SeqDataTable, ResFinderDataTable
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
 
@@ -101,10 +102,8 @@ def edit_data_resfinder(request, resfinder_id):
     if request.method == 'POST':
         resfinder_form = ResFinderDataForm(request.POST, instance=resfinder_data)  # Do I have to call the post twice? Maybe?
         if resfinder_form.is_valid():
-            # r = ResFinderDataForm(request.POST, instance=resfinder_data)
             resfinder_form.save()
-            return render(request,
-                          'data_wrapper/saved_queries.html')
+            return redirect('data_wrapper:resfinderdata_table')
     else:
         return render(request,
                       'data_wrapper/edit_data_resfinder.html',
@@ -121,8 +120,7 @@ def edit_data_seqdata(request, seqdata_id):
         if seqdata_form.is_valid():
             s = SeqDataForm(request.POST, instance=seqdata)
             s.save()
-            return render(request,
-                          'data_wrapper/seqdata_table.html')
+            return redirect('data_wrapper:seqdata_table')
     else:
         return render(request,
                       'data_wrapper/edit_data_seqdata.html',
@@ -174,14 +172,30 @@ def query_results(request):
                   'data_wrapper/query_results.html')
 
 
+# This method and resfinderdata_table can probably be merged into one to make code less repeat-y. Look into this
+@login_required
 def seqdata_table(request):
-    table = SeqDataTable(SeqData.objects.all())
+    # Need to generate a column that will take user to an editing page.
+    table = SeqDataTable(SeqData.objects.all(), extra_columns=[('', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_seqdata\' seqdata_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>'))])
     RequestConfig(request).configure(table)
     return render(request,
                   'data_wrapper/seqdata_table.html',
                   {
                       'table': table
                   })
+
+
+@login_required
+def resfinderdata_table(request):
+    # Need to generate a column that will take user to an editing page.
+    table = ResFinderDataTable(ResFinderData.objects.all(), extra_columns=[('', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_resfinder\' resfinder_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>'))])
+    RequestConfig(request).configure(table)
+    return render(request,
+                  'data_wrapper/resfinderdata_table.html',
+                  {
+                       'table': table
+                  }
+                  )
 
 
 def decipher_input_request(attributes, operations, terms, combine_operations):
