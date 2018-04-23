@@ -1,10 +1,11 @@
 from dal import autocomplete
 from django_tables2 import RequestConfig
 from django.shortcuts import render
-from data_wrapper.models import LSTSData, Sample, SeqData
-from .forms import SearchForm, BaseSearchFormSet
+from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries
+from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm
 from .tables import SeqDataTable
 from django.forms.formsets import formset_factory
+from django.contrib.auth.decorators import login_required
 
 
 class AttributeAutocompleteFromList(autocomplete.Select2ListView):
@@ -13,13 +14,21 @@ class AttributeAutocompleteFromList(autocomplete.Select2ListView):
 
 
 # Create your views here.
+@login_required
 def query_builder(request):
     terms = list()
     operations = list()
     attributes = list()
     combine_operations = list()
     SearchFormSet = formset_factory(SearchForm, formset=BaseSearchFormSet)
+    save_query_form = QuerySaveForm()
     if request.method == 'POST':
+        save_query_form = QuerySaveForm(request.POST)
+        query_name = ''
+        save_query = 'No'
+        if save_query_form.is_valid():
+            query_name = save_query_form.cleaned_data.get('query_name')
+            save_query = save_query_form.cleaned_data.get('save_query')
         search_formset = SearchFormSet(request.POST)
         if search_formset.is_valid():
             for search_form in search_formset:
@@ -31,12 +40,19 @@ def query_builder(request):
                 operations.append(search_form.cleaned_data.get('operation'))
                 combine_operations.append(search_form.cleaned_data.get('combine_choice'))
             seqids = decipher_input_request(attributes, operations, terms, combine_operations)
+            if save_query == 'Yes':
+                SavedQueries.objects.create(user=request.user,
+                                            search_terms=terms,
+                                            search_attributes=attributes,
+                                            search_operations=operations,
+                                            search_combine_operations=combine_operations)
             if len(seqids) == 1 and 'ERROR' in seqids[0]:
                 return render(request,
                               'data_wrapper/query_builder.html',
                               {
                                  'search_formset': search_formset,
-                                 'error_msg': seqids[0]
+                                 'error_msg': seqids[0],
+                                 'save_query_form': save_query_form
                               })
             else:
                 return render(request,
@@ -50,7 +66,8 @@ def query_builder(request):
     return render(request,
                   'data_wrapper/query_builder.html',
                   {
-                      'search_formset': search_formset
+                      'search_formset': search_formset,
+                      'save_query_form': save_query_form
                   },
                   )
 
@@ -61,7 +78,7 @@ def query_results(request):
 
 
 def seqdata_table(request):
-    table = SeqDataTable(SeqData.objects.filter())
+    table = SeqDataTable(SeqData.objects.all())
     RequestConfig(request).configure(table)
     return render(request,
                   'data_wrapper/seqdata_table.html',
@@ -74,14 +91,13 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
     # NOTE: This may not be a good way to do things at all, but as a proof of concept it seems to work.
     # TODO: Become a database expert so you know if this is actually a good idea.
     samples = Sample.objects.all()
+    models = [Sample, SeqData, LSTSData, ResFinderData]
     for i in range(len(attributes)):
         # Step 1: Find which model/field we're pulling stuff from.
-        if attributes[i] in get_model_fields(LSTSData):
-            model = LSTSData
-            field = model._meta.get_field(attributes[i])
-        elif attributes[i] in get_model_fields(SeqData):
-            model = SeqData
-            field = model._meta.get_field(attributes[i])
+        for m in models:
+            if attributes[i] in get_model_fields(m):
+                model = m
+                field = model._meta.get_field(attributes[i])
 
         queryset = model.objects.all()
         fieldname = str(field).split('.')[-1]
@@ -136,14 +152,10 @@ def get_model_fields(model):
 
 def make_list_of_fields():
     fields = list()  # Would use a set here, but django-autocomplete-light wants a list.
-    for field in get_model_fields(LSTSData):
-        if field not in fields:
-            fields.append(field)
-    for field in get_model_fields(SeqData):
-        if field not in fields:
-            fields.append(field)
-    for field in get_model_fields(Sample):
-        if field not in fields:
-            fields.append(field)
+    models = [Sample, SeqData, LSTSData, ResFinderData]
+    for model in models:
+        for field in get_model_fields(model):
+            if field not in fields:
+                fields.append(field)
     return fields
 

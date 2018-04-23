@@ -1,7 +1,7 @@
 from django import forms
 from dal import autocomplete
 from django.forms.formsets import BaseFormSet
-from data_wrapper.models import LSTSData, Sample, SeqData
+from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData
 
 
 def get_model_fields(model):
@@ -13,16 +13,12 @@ def get_model_fields(model):
 
 
 def make_list_of_fields():
-    fields = list()
-    for field in get_model_fields(LSTSData):
-        if field not in fields:
-            fields.append(field)
-    for field in get_model_fields(SeqData):
-        if field not in fields:
-            fields.append(field)
-    for field in get_model_fields(Sample):
-        if field not in fields:
-            fields.append(field)
+    fields = list()  # Would use a set here, but django-autocomplete-light wants a list.
+    models = [Sample, SeqData, LSTSData, ResFinderData]
+    for model in models:
+        for field in get_model_fields(model):
+            if field not in fields:
+                fields.append(field)
     return fields
 
 
@@ -55,6 +51,15 @@ class SearchForm(forms.Form):
     date_input = forms.DateField(widget=forms.TextInput(attrs={
         'class': 'datepicker'
     }), required=False)
+
+
+class QuerySaveForm(forms.Form):
+    CHOICES = (('Yes', 'Yes'),
+               ('No', 'No'))
+    query_name = forms.CharField(max_length=256, required=False)  # This may be a bad idea. Change to True, maybe.
+    save_query = forms.ChoiceField(choices=CHOICES,
+                                   widget=forms.RadioSelect,
+                                   initial='No')
 
 
 class BaseSearchFormSet(BaseFormSet):

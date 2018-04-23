@@ -14,6 +14,8 @@ services:
       - postgres
     volumes:
       - .:/app
+      - /mnt/scratch:/mnt/scratch
+      - /mnt/nas:/mnt/nas
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres

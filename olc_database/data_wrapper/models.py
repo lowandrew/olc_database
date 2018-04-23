@@ -1,4 +1,6 @@
 from django.db import models
+from olc_database.users.models import User
+from django.contrib.postgres.fields import ArrayField
 
 
 # Create your models here.
@@ -7,6 +9,15 @@ class Sample(models.Model):
 
     def __str__(self):
         return self.seqid
+
+
+class SavedQueries(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    search_terms = ArrayField(models.CharField(max_length=48))
+    search_attributes = ArrayField(models.CharField(max_length=48))
+    search_operations = ArrayField(models.CharField(max_length=48))
+    search_combine_operations = ArrayField(models.CharField(max_length=48))
+
 
 
 class SeqData(models.Model):
@@ -74,3 +85,17 @@ class LSTSData(models.Model):
 
     def __str__(self):
         return self.lsts_id
+
+
+class ResFinderData(models.Model):
+    seqid = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='resfinder_data')
+    resfinder_gene = models.CharField(max_length=56)
+    resfinder_allele = models.IntegerField()
+    resfinder_resistance = models.CharField(max_length=64)
+    resfinder_percent_identity = models.FloatField()
+    resfinder_percent_covered = models.FloatField()
+    resfinder_contig = models.CharField(max_length=128)
+    resfinder_location = models.CharField(max_length=64)
+    resfinder_sequence = models.CharField(max_length=8192)
+    resfinder_aa_identity = models.CharField(max_length=64)  # This is a dash sometimes, so can't have as FloatField :(
+    # TODO: Find out if aa_alignment and other fields are necessary to add.
