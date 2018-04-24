@@ -38,6 +38,12 @@ class SeqDataForm(forms.ModelForm):
     change_reason = forms.CharField(max_length=128)
 
 
+class CustomTableForm(forms.Form):
+    table_attribute = autocomplete.Select2ListChoiceField(choice_list=make_list_of_fields,
+                                                          widget=autocomplete.ListSelect2(url='data_wrapper:attribute-autocomplete'),
+                                                          required=True)
+
+
 class SearchForm(forms.Form):
     OPERATION_CHOICES = (
         ('CONTAINS', 'CONTAINS'),

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block content %}
+  <style>
+      .add-row {
+        color: #191b80;
+      }
+      .delete-row {
+        color:red;
+      }
+      .table-formset {
+        margin: auto;
+      }
+  </style>
+  <br>
+  <h2>Welcome to the table builder!</h2>
+  <p>Use the form below to choose the attributes you'd like your table to contain.</p>
+  <form method="post">
+  {% csrf_token %}
+  {{ table_formset.management_form }}
+  {% for table_form in table_formset %}
+    <div class="table-formset">
+      {{ table_form.table_attribute }}
+    </div>
+  {% endfor %}
+  <br><br>
+  {{ save_query_form }}
+  <button type="submit" class="btn btn-outline-primary btn-block">Create Table</button>
+  </form>
+   <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+   <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
+   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+   <script src="{% static 'js/jquery.formset.js' %}"></script>
+   <script> // Allows adding and removal of formsets
+        $('.table-formset').formset({
+            addText: 'Add another',
+            deleteText: 'remove'
+    });
+    </script>
+  {% for table_form in table_formset %}
+    {{ table_form.media }}
+  {% endfor %}
+{% endblock %}

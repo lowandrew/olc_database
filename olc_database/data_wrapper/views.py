@@ -3,7 +3,7 @@ from django_tables2 import RequestConfig
 from django_tables2.columns import TemplateColumn
 from django.shortcuts import render, get_object_or_404, redirect
 from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries
-from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm
+from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm, CustomTableForm
 from .tables import SeqDataTable, ResFinderDataTable
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
@@ -15,6 +15,42 @@ class AttributeAutocompleteFromList(autocomplete.Select2ListView):
 
 
 # Create your views here.
+@login_required
+def table_builder(request):
+    terms = list()
+    TableFormSet = formset_factory(CustomTableForm, formset=BaseSearchFormSet)
+    save_query_form = QuerySaveForm()
+    if request.method == 'POST':
+        save_query_form = QuerySaveForm(request.POST)
+        query_name = ''
+        save_query = 'No'
+        if save_query_form.is_valid():
+            query_name = save_query_form.cleaned_data.get('query_name')
+            save_query = save_query_form.cleaned_data.get('save_query')
+        table_formset = TableFormSet(request.POST)
+        if table_formset.is_valid():
+            for table_form in table_formset:
+                terms.append(table_form.cleaned_data.get('table_attribute'))
+        seqid_list = list(Sample.objects.values_list('seqid', flat=True))
+        table_data = get_table_data(table_attributes=terms,
+                                    seqid_list=seqid_list)
+        terms.insert(0, 'SEQID')
+        return render(request,
+                      'data_wrapper/generic_table.html',
+                      {
+                          'table_data': table_data,
+                          'table_attributes': terms
+                      })
+    else:
+        table_formset = TableFormSet()
+    return render(request,
+                  'data_wrapper/table_builder.html',
+                  {
+                      'table_formset': table_formset,
+                      'save_query_form': save_query_form
+                  })
+
+
 @login_required
 def query_builder(request):
     terms = list()
@@ -212,6 +248,18 @@ def resfinder_history(request, resfinder_id):
 
 
 @login_required
+def generic_table(request, table_attributes, seqid_list):
+    table_data = get_table_data(table_attributes=table_attributes,
+                                seqid_list=seqid_list)
+    return render(request,
+                  'data_wrapper/generic_table.html',
+                  {
+                      'table_attributes': table_attributes,
+                      'table_data': table_data
+                  })
+
+
+@login_required
 def query_results(request):
     return render(request,
                   'data_wrapper/query_results.html')
@@ -247,6 +295,34 @@ def resfinderdata_table(request):
                   )
 
 
+def get_table_data(table_attributes, seqid_list):
+    table_data = list()
+    models = [SeqData, LSTSData, ResFinderData]
+    for seqid in seqid_list:
+        row_data = list()
+        row_data.append(seqid)
+        for attribute in table_attributes:
+            for m in models:
+                if attribute in get_model_fields(m):
+                    model = m
+                    field = m._meta.get_field(attribute)
+            fieldname = str(field).split('.')[-1]
+            data = model.objects.filter(seqid=Sample.objects.get(seqid=seqid))
+            a = data.values_list(fieldname, flat=True)
+            if len(a) == 0:
+                data_to_add = 'NA'
+            elif len(a) == 1:
+                data_to_add = a[0]
+            else:
+                data_to_add = ''
+                for item in a:
+                    data_to_add += item + ','
+                data_to_add = data_to_add[:-1]
+            row_data.append(data_to_add)
+        table_data.append(row_data)
+    return table_data
+
+
 def decipher_input_request(attributes, operations, terms, combine_operations):
     # NOTE: This may not be a good way to do things at all, but as a proof of concept it seems to work.
     # TODO: Become a database expert so you know if this is actually a good idea.
@@ -258,6 +334,7 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             if attributes[i] in get_model_fields(m):
                 model = m
                 field = model._meta.get_field(attributes[i])
+                # TODO: Add a break here. I see no chance it messes things up, but it might, so we'll test it.
 
         queryset = model.objects.all()
         fieldname = str(field).split('.')[-1]

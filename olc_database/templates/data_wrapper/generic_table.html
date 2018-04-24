@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+  <br>
+  <h2>Custom Table!</h2>
+  <p>Your custom table is displayed below</p>
+  <table id="generic-table" class="table table-hover table-bordered">
+  <thead>
+    <tr>
+      {% for attribute in table_attributes %}
+          <td>{{ attribute }}</td>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for data in table_data %}
+      <tr>
+        {% for item in data %}
+        <td>{{ item }}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+  </table>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.4/css/jquery.dataTables.min.css">
+  <script type="text/javascript">
+      $(document).ready( function () {
+        $.noConflict();  // For some reason datatable won't load until I add this, which the internet says is because
+        // I have multiple versions of jQuery present somehow. However, when I don't have jQuery loaded here,
+        // I get an error saying that jQuery isn't present when I try to use datatables. Go figure.
+        $('#generic-table').dataTable();
+      });
+  </script>
+{% endblock %}

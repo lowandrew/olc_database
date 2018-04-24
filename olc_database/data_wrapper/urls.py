@@ -6,6 +6,8 @@ from olc_database.data_wrapper import views
 app_name = 'data_wrapper'
 urlpatterns = [
     url(r'^query_builder$', views.query_builder, name='query_builder'),
+    url(r'^generic_table$', views.generic_table, name='generic_table'),
+    url(r'^table_builder$', views.table_builder, name='table_builder'),
     url(r'^query_results$', views.query_results, name='query_results'),
     url(r'^seqdata_table$', views.seqdata_table, name='seqdata_table'),
     url(r'^resfinderdata_table$', views.resfinderdata_table, name='resfinderdata_table'),

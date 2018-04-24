@@ -26,6 +26,8 @@
       });
       // The following will color cells that have changed so that users can more easily track changes as they've
       // gone through.
+      // Also, this should get put somewhere where it can be loaded into multiple pages, so we don't end up repeating
+      // things way more than we should
       function colorTableChanges() {
           var table = document.getElementById('seqdata-table');
           var num_columns = table.rows[0].cells.length;

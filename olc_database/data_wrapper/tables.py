@@ -6,12 +6,12 @@ class SeqDataTable(tables.Table):
     class Meta:
         model = SeqData
         attrs = {'id': 'seqdata-table',
-                 'class': 'table table-hover table-border'}
+                 'class': 'table table-hover table-border compact'}
 
 
 class ResFinderDataTable(tables.Table):
     class Meta:
         model = ResFinderData
         attrs = {'id': 'resfinderdata-table',
-                 'class': 'table table-hover table-border'}
+                 'class': 'table table-hover table-border compact'}
 

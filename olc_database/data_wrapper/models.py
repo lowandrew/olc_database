@@ -3,6 +3,7 @@ from olc_database.users.models import User
 from django.contrib.postgres.fields import ArrayField
 from simple_history.models import HistoricalRecords
 
+
 # Create your models here.
 class Sample(models.Model):
     seqid = models.CharField(max_length=56)
@@ -22,6 +23,15 @@ class SavedQueries(models.Model):
 
     def __str__(self):
         return self.query_name
+
+
+class SavedTables(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    table_attributes = ArrayField(models.CharField(max_length=128))
+    table_name = models.CharField(max_length=256)
+
+    def __str__(self):
+        return self.table_name
 
 
 class SeqData(models.Model):
