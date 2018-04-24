@@ -167,6 +167,39 @@ def query_details(request, query_id):
                   })
 
 
+@login_required
+def seqdata_history(request, seqdata_id):
+    seqdata = get_object_or_404(SeqData, pk=seqdata_id)
+    histories = seqdata.history.all()
+    table = SeqDataTable(histories,
+                         extra_columns=[('Date Changed', TemplateColumn('{{ record.history_date }}')),
+                                        ('Changed By', TemplateColumn('{{ record.history_user }}'))])
+    RequestConfig(request).configure(table)
+    return render(request,
+                  'data_wrapper/seqdata_history.html',
+                  {
+                      'seqdata': seqdata,
+                      'table': table,
+                  })
+
+
+@login_required
+def resfinder_history(request, resfinder_id):
+    resfinderdata = get_object_or_404(ResFinderData, pk=resfinder_id)
+    histories = resfinderdata.history.all()
+    table = ResFinderDataTable(histories,
+                               extra_columns=[('Date Changed', TemplateColumn('{{ record.history_date }}')),
+                                              ('Changed By', TemplateColumn('{{ record.history_user }}'))])
+    RequestConfig(request).configure(table)
+    return render(request,
+                  'data_wrapper/resfinder_history.html',
+                  {
+                      'resfinderdata': resfinderdata,
+                      'table': table,
+                  })
+
+
+@login_required
 def query_results(request):
     return render(request,
                   'data_wrapper/query_results.html')
@@ -176,7 +209,9 @@ def query_results(request):
 @login_required
 def seqdata_table(request):
     # Need to generate a column that will take user to an editing page.
-    table = SeqDataTable(SeqData.objects.all(), extra_columns=[('', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_seqdata\' seqdata_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>'))])
+    table = SeqDataTable(SeqData.objects.all(),
+                         extra_columns=[('Edit', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_seqdata\' seqdata_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>')),
+                                        ('History', TemplateColumn('<a href="{% url \'data_wrapper:seqdata_history\' seqdata_id=record.pk %}" class="btn btn-outline-dark" role="button" aria-pressed="true">View History</a>'))])
     RequestConfig(request).configure(table)
     return render(request,
                   'data_wrapper/seqdata_table.html',
@@ -188,7 +223,9 @@ def seqdata_table(request):
 @login_required
 def resfinderdata_table(request):
     # Need to generate a column that will take user to an editing page.
-    table = ResFinderDataTable(ResFinderData.objects.all(), extra_columns=[('', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_resfinder\' resfinder_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>'))])
+    table = ResFinderDataTable(ResFinderData.objects.all(),
+                               extra_columns=[('Edit', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_resfinder\' resfinder_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>')),
+                                              ('History', TemplateColumn('<a href="{% url \'data_wrapper:resfinder_history\' resfinder_id=record.pk %}" class="btn btn-outline-dark" role="button" aria-pressed="true">View History</a>'))])
     RequestConfig(request).configure(table)
     return render(request,
                   'data_wrapper/resfinderdata_table.html',

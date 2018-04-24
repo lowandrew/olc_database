@@ -16,6 +16,8 @@ urlpatterns = [
     url(r'^query_details/(?P<query_id>\d+)/$', views.query_details, name='query_details'),
     url(r'^edit_data_resfinder/(?P<resfinder_id>\d+)/$', views.edit_data_resfinder, name='edit_data_resfinder'),
     url(r'^edit_data_seqdata/(?P<seqdata_id>\d+)/$', views.edit_data_seqdata, name='edit_data_seqdata'),
+    url(r'^seqdata_history/(?P<seqdata_id>\d+)/$', views.seqdata_history, name='seqdata_history'),
+    url(r'^resfinder_history/(?P<resfinder_id>\d+)/$', views.resfinder_history, name='resfinder_history'),
     url(r'^attribute-autocomplete/$',
         AttributeAutocompleteFromList.as_view(),
         name='attribute-autocomplete'),

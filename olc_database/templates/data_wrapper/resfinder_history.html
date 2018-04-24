@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load render_table from django_tables2 %}
+{% block content %}
+  <br>
+  <h2>SeqData History for {{ resfinderdata.seqid }}</h2>
+  <br>
+  {% render_table table %}
+  <br>
+  <a href="{% url 'data_wrapper:resfinderdata_table' %}" class="btn btn-dark" role="button" aria-pressed="true">Return to ResFinderData Table</a>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.4/css/jquery.dataTables.min.css">
+  <script type="text/javascript" src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
+  <script type="text/javascript">
+      $(document).ready( function () {
+        $.noConflict();  // For some reason datatable won't load until I add this, which the internet says is because
+        // I have multiple versions of jQuery present somehow. However, when I don't have jQuery loaded here,
+        // I get an error saying that jQuery isn't present when I try to use datatables. Go figure.
+        $('#resfinderdata-table').dataTable(
+          {
+            "pageLength": 50,
+            "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ]
+          }
+        );
+      });
+      </script>
+{% endblock %}

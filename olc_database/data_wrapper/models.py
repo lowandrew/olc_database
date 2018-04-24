@@ -1,11 +1,12 @@
 from django.db import models
 from olc_database.users.models import User
 from django.contrib.postgres.fields import ArrayField
-
+from simple_history.models import HistoricalRecords
 
 # Create your models here.
 class Sample(models.Model):
     seqid = models.CharField(max_length=56)
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.seqid
@@ -78,6 +79,7 @@ class SeqData(models.Model):
     machine_name = models.CharField(max_length=64)
     pipeline_version = models.CharField(max_length=64)
     date_assembled = models.DateTimeField()
+    history = HistoricalRecords()
 
 
 class LSTSData(models.Model):
@@ -85,6 +87,7 @@ class LSTSData(models.Model):
     lsts_id = models.CharField(max_length=88)
     country_of_origin = models.CharField(max_length=128)
     food = models.CharField(max_length=128)
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.lsts_id
@@ -102,3 +105,4 @@ class ResFinderData(models.Model):
     resfinder_sequence = models.CharField(max_length=8192)
     resfinder_aa_identity = models.CharField(max_length=64)  # This is a dash sometimes, so can't have as FloatField :(
     # TODO: Find out if aa_alignment and other fields are necessary to add.
+    history = HistoricalRecords()

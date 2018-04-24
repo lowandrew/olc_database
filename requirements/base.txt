@@ -22,3 +22,4 @@ coreapi==2.3.3  # https://github.com/core-api/python-client
 cython  # Pandas is claiming it needs cython. Unclear on why, but hopefully this will allow it to install
 pandas
 xlrd
+django-simple-history
