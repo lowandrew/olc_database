@@ -22,6 +22,30 @@
             "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ]
           }
         );
+        colorTableChanges();
       });
+      function colorTableChanges() {
+          var table = document.getElementById('resfinderdata-table');
+          var num_columns = table.rows[0].cells.length;
+          var num_rows = $('#resfinderdata-table tr').length;
+          if(num_rows > 1){
+              for(var i=1; i<num_rows; i++){
+                for(var j=0; j<num_columns; j++){
+                   var cell1 = table.rows[i].cells[j];
+                   var cell2 = table.rows[i + 1].cells[j];
+                   if(j >= num_columns - 3){
+                     cell1.classList.add('alert-secondary');
+                     cell2.classList.add('alert-secondary');
+                   }
+                   else {
+                     if (cell1.innerHTML !== cell2.innerHTML) {
+                       cell1.classList.add('alert-info');
+                       cell2.classList.add('alert-info');
+                     }
+                   }
+                }
+              }
+          }
+      }
       </script>
 {% endblock %}

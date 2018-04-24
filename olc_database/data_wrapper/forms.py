@@ -27,11 +27,15 @@ class ResFinderDataForm(forms.ModelForm):
         model = ResFinderData
         fields = get_model_fields(ResFinderData)
 
+    change_reason = forms.CharField(max_length=128)
+
 
 class SeqDataForm(forms.ModelForm):
     class Meta:
         model = SeqData
         fields = get_model_fields(SeqData)
+
+    change_reason = forms.CharField(max_length=128)
 
 
 class SearchForm(forms.Form):

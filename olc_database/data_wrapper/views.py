@@ -100,9 +100,13 @@ def edit_data_resfinder(request, resfinder_id):
     resfinder_data = get_object_or_404(ResFinderData, pk=resfinder_id)
     resfinder_form = ResFinderDataForm(instance=resfinder_data)
     if request.method == 'POST':
-        resfinder_form = ResFinderDataForm(request.POST, instance=resfinder_data)  # Do I have to call the post twice? Maybe?
+        resfinder_form = ResFinderDataForm(request.POST)
         if resfinder_form.is_valid():
-            resfinder_form.save()
+            r = ResFinderDataForm(request.POST, instance=resfinder_data)
+            change_reason = resfinder_form.cleaned_data.get('change_reason')
+            with_reason = r.save(commit=False)
+            with_reason.changeReason = change_reason
+            r.save()
             return redirect('data_wrapper:resfinderdata_table')
     else:
         return render(request,
@@ -118,7 +122,12 @@ def edit_data_seqdata(request, seqdata_id):
     if request.method == 'POST':
         seqdata_form = SeqDataForm(request.POST)
         if seqdata_form.is_valid():
+            # Have to do some fancy footwork here to make the change reason save with the other form data.
+            # Not entirely sure how this works, but it does, so I won't complain.
             s = SeqDataForm(request.POST, instance=seqdata)
+            change_reason = seqdata_form.cleaned_data.get('change_reason')
+            with_reason = s.save(commit=False)
+            with_reason.changeReason = change_reason
             s.save()
             return redirect('data_wrapper:seqdata_table')
     else:
@@ -126,6 +135,7 @@ def edit_data_seqdata(request, seqdata_id):
                       'data_wrapper/edit_data_seqdata.html',
                       {'seqdata_form': seqdata_form},
                       )
+
 
 @login_required
 def delete_query(request, query_id):
@@ -173,7 +183,8 @@ def seqdata_history(request, seqdata_id):
     histories = seqdata.history.all()
     table = SeqDataTable(histories,
                          extra_columns=[('Date Changed', TemplateColumn('{{ record.history_date }}')),
-                                        ('Changed By', TemplateColumn('{{ record.history_user }}'))])
+                                        ('Changed By', TemplateColumn('{{ record.history_user }}')),
+                                        ('Change Reason', TemplateColumn('{{ record.history_change_reason }}'))])
     RequestConfig(request).configure(table)
     return render(request,
                   'data_wrapper/seqdata_history.html',
@@ -189,7 +200,8 @@ def resfinder_history(request, resfinder_id):
     histories = resfinderdata.history.all()
     table = ResFinderDataTable(histories,
                                extra_columns=[('Date Changed', TemplateColumn('{{ record.history_date }}')),
-                                              ('Changed By', TemplateColumn('{{ record.history_user }}'))])
+                                              ('Changed By', TemplateColumn('{{ record.history_user }}')),
+                                              ('Change Reason', TemplateColumn('{{ record.history_change_reason }}'))])
     RequestConfig(request).configure(table)
     return render(request,
                   'data_wrapper/resfinder_history.html',
