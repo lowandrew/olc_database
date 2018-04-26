@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load staticfiles %}
-{% load crispy_forms_tags %}
 {% block content %}
   <br>
   <style>
@@ -14,6 +13,7 @@
     margin: auto;
   }
   </style>
+
   <h2>Welcome to the Query Wizard! Create your query below.</h2>
   {% if error_msg %}
     <br>
@@ -27,31 +27,32 @@
   {{ search_formset.management_form }}
       {% for search_form in search_formset %}
         <div class="search-formset">
-          {# Adding in the form errors makes the page very ugly. TODO: Fix at some point soon, maybe with crispy again #}
+          {% if search_form.search_attribute.errors %}
+            <br>
+            <div class="alert alert-danger" style="width:300px; height: 50px;">
+              {{ search_form.search_attribute.errors }}
+            </div>
+          {% endif %}
           {{ search_form.search_attribute }}
-    {#      {% if search_form.search_attribute.errors %}#}
-    {#          <div class="alert alert-danger" style="width:300px">#}
-    {#              {{ search_form.search_attribute.errors }}#}
-    {#          </div>#}
-    {#      {% endif %}#}
           {{ search_form.operation }}
           {% if search_form.operation.value == 'BEFORE' or search_form.operation.value == 'AFTER' %}
             {{ search_form.date_input }}
           {% else %}
             {{ search_form.search_item }}
           {% endif %}
-    {#      {% if search_form.search_item.errors %}#}
-    {#        <div class="alert alert-danger" style="width:300px">#}
-    {#          {{ search_form.search_item.errors }}#}
-    {#        </div>#}
-    {#      {% endif %}#}
+          {% if search_form.search_item.errors %}
+            <div class="alert alert-danger" style="width:300px; height: 50px;">
+              {{ search_form.search_item.errors }}
+            </div>
+          {% endif %}
           {{ search_form.combine_choice }}
         </div>
   {% endfor %}
   <br>
-  <br>
   {# TODO: This form is among the ugliest things I've ever seen. Make it look better (crispy?) #}
+  <br>
   {{ save_query_form }}
+  <br><br>
   <button type="submit" class="btn btn-outline-primary btn-block">Run Query</button>
   </form>
   <!-- Include formset plugin - including jQuery dependency -->

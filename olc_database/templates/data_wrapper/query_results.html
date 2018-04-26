@@ -33,7 +33,7 @@
     {% for saved_table in saved_tables %}
       <tr>
         <td>{{ saved_table.table_name }}</td>
-        <td><a href="{% url 'data_wrapper:generic_table' table_attributes=saved_table.table_attributes seqid_list=seqids %}" class="btn btn-primary" role="button">View Query</a></td>
+        <td><a href="{% url 'data_wrapper:generic_table' table_id=saved_table.id seqid_id=seqid_id %}" class="btn btn-primary" role="button">View Table</a></td>
         <td><a href="{% url 'data_wrapper:delete_table_confirm' table_id=saved_table.id %}" class="btn btn-danger" role="button">Delete Table</a></td>
       </tr>
     {% endfor %}

@@ -80,7 +80,6 @@ class QuerySaveForm(forms.Form):
                ('No', 'No'))
     query_name = forms.CharField(max_length=256, required=False)  # This may be a bad idea. Change to True, maybe.
     save_query = forms.ChoiceField(choices=CHOICES,
-                                   widget=forms.RadioSelect,
                                    initial='No')
 
 

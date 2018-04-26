@@ -13,6 +13,10 @@ class Sample(models.Model):
         return self.seqid
 
 
+class SeqIdList(models.Model):
+    seqid_list = ArrayField(models.CharField(max_length=48))
+
+
 class SavedQueries(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     search_terms = ArrayField(models.CharField(max_length=48))

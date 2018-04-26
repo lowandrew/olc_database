@@ -6,7 +6,7 @@ from olc_database.data_wrapper import views
 app_name = 'data_wrapper'
 urlpatterns = [
     url(r'^query_builder$', views.query_builder, name='query_builder'),
-    url(r'^generic_table/(?P<table_attributes>.+)/(?P<seqid_list>.+)/$', views.generic_table, name='generic_table'),
+    url(r'^generic_table/table-(?P<table_id>\d+)/seqid-(?P<seqid_id>\d+)/$', views.generic_table, name='generic_table'),
     url(r'^table_builder$', views.table_builder, name='table_builder'),
     url(r'^query_results$', views.query_results, name='query_results'),
     url(r'^seqdata_table$', views.seqdata_table, name='seqdata_table'),
