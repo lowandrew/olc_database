@@ -6,7 +6,7 @@ class SeqDataTable(tables.Table):
     class Meta:
         model = SeqData
         attrs = {'id': 'seqdata-table',
-                 'class': 'table table-hover table-border compact'}
+                 'class': 'table table-hover table-border compact table-sm table-responsive'}
 
 
 class ResFinderDataTable(tables.Table):

@@ -80,6 +80,10 @@ def read_resfinder(data_folder):
         except:
             Sample.objects.create(seqid=df['Strain'][i])
         # Now add data, yay.
+        try:
+            float(df['aa_Identity'][i])
+        except:
+            df['aa_Identity'][i] = 100.0
         ResFinderData.objects.update_or_create(seqid=Sample.objects.get(seqid=df['Strain'][i]),
                                                resfinder_gene=df['Gene'][i],
                                                resfinder_allele=df['Allele'][i],

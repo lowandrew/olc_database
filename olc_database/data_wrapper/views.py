@@ -312,7 +312,7 @@ def seqdata_table(request):
     table = SeqDataTable(SeqData.objects.all(),
                          extra_columns=[('Edit', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_seqdata\' seqdata_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>')),
                                         ('History', TemplateColumn('<a href="{% url \'data_wrapper:seqdata_history\' seqdata_id=record.pk %}" class="btn btn-outline-dark" role="button" aria-pressed="true">View History</a>'))])
-    RequestConfig(request).configure(table)
+    RequestConfig(request, paginate=False).configure(table)
     return render(request,
                   'data_wrapper/seqdata_table.html',
                   {
@@ -326,7 +326,7 @@ def resfinderdata_table(request):
     table = ResFinderDataTable(ResFinderData.objects.all(),
                                extra_columns=[('Edit', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_resfinder\' resfinder_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>')),
                                               ('History', TemplateColumn('<a href="{% url \'data_wrapper:resfinder_history\' resfinder_id=record.pk %}" class="btn btn-outline-dark" role="button" aria-pressed="true">View History</a>'))])
-    RequestConfig(request).configure(table)
+    RequestConfig(request, paginate=False).configure(table)
     return render(request,
                   'data_wrapper/resfinderdata_table.html',
                   {
