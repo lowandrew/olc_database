@@ -1,4 +1,3 @@
-# import ast
 from dal import autocomplete
 from django_tables2 import RequestConfig
 from django_tables2.columns import TemplateColumn
@@ -380,8 +379,8 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             if attributes[i] in get_model_fields(m):
                 model = m
                 field = model._meta.get_field(attributes[i])
-                # TODO: Add a break here. I see no chance it messes things up, but it might, so we'll test it.
 
+        field_type = field.get_internal_type()
         queryset = model.objects.all()
         fieldname = str(field).split('.')[-1]
         # With that done, do different things depending on the operation.
@@ -399,6 +398,11 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             except ValueError:
                 return ['ERROR: When using a greater than or less than operation, you must enter a number.'
                         ' Please try again.']
+            # Also make sure that field type is valid - can't call greater or less than on a charfield
+            if field_type != 'IntegerField' and field_type != 'FloatField':
+                return ['ERROR: Cannot use GREATER THAN operation on {fieldname}, as '
+                        '{fieldname} is a {fieldtype}'.format(fieldname=fieldname,
+                                                              fieldtype=field_type)]
             queryset = queryset.filter(**{fieldname + '__gt': term_as_integer})
         elif operations[i] == 'LESS THAN':
             try:
@@ -406,11 +410,23 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             except ValueError:
                 return ['ERROR: When using a greater than or less than operation, you must enter a number.'
                         ' Please try again.']
+            if field_type != 'IntegerField' and field_type != 'FloatField':
+                return ['ERROR: Cannot use LESS THAN operation on {fieldname}, as '
+                        '{fieldname} is a {fieldtype}'.format(fieldname=fieldname,
+                                                              fieldtype=field_type)]
             queryset = queryset.filter(**{fieldname + '__lt': term_as_integer})
         elif operations[i] == 'BEFORE':
-            queryset = queryset.filter(**{fieldname + '__date__lt': terms[i]})
+            if field_type != 'DateField':
+                return ['ERROR: BEFORE and AFTER operations must be used on DateFields. {fieldname} is '
+                        ' a {field_type}'.format(fieldname=fieldname,
+                                                 field_type=field_type)]
+            queryset = queryset.filter(**{fieldname + '__lt': terms[i]})
         elif operations[i] == 'AFTER':
-            queryset = queryset.filter(**{fieldname + '__date__gt': terms[i]})
+            if field_type != 'DateField':
+                return ['ERROR: BEFORE and AFTER operations must be used on DateFields. {fieldname} is '
+                        ' a {field_type}'.format(fieldname=fieldname,
+                                                 field_type=field_type)]
+            queryset = queryset.filter(**{fieldname + '__gt': terms[i]})
 
         queryset_seqids = list()
         for item in queryset:

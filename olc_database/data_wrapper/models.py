@@ -44,7 +44,7 @@ class SeqData(models.Model):
     n50 = models.IntegerField()
     num_contigs = models.IntegerField()
     rmlst = models.CharField(max_length=56)
-    sequencing_date = models.DateTimeField()
+    sequencing_date = models.DateField()
     analyst = models.CharField(max_length=128)
     sample_purity = models.CharField(max_length=64)
     assembly_quality = models.CharField(max_length=64)
@@ -92,7 +92,7 @@ class SeqData(models.Model):
     flowcell = models.CharField(max_length=128)
     machine_name = models.CharField(max_length=64)
     pipeline_version = models.CharField(max_length=64)
-    date_assembled = models.DateTimeField()
+    date_assembled = models.DateField()
     history = HistoricalRecords()
 
 
