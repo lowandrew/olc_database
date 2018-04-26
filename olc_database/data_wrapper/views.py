@@ -1,8 +1,9 @@
+import ast
 from dal import autocomplete
 from django_tables2 import RequestConfig
 from django_tables2.columns import TemplateColumn
 from django.shortcuts import render, get_object_or_404, redirect
-from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries
+from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries, SavedTables
 from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm, CustomTableForm
 from .tables import SeqDataTable, ResFinderDataTable
 from django.forms.formsets import formset_factory
@@ -34,6 +35,10 @@ def table_builder(request):
         seqid_list = list(Sample.objects.values_list('seqid', flat=True))
         table_data = get_table_data(table_attributes=terms,
                                     seqid_list=seqid_list)
+        if save_query == 'Yes':
+            SavedTables.objects.create(user=request.user,
+                                       table_attributes=terms,
+                                       table_name=query_name)
         terms.insert(0, 'SEQID')
         return render(request,
                       'data_wrapper/generic_table.html',
@@ -93,10 +98,12 @@ def query_builder(request):
                                                 search_operations=operations,
                                                 search_combine_operations=combine_operations,
                                                 query_name=query_name)
+                saved_tables = SavedTables.objects.filter(user=request.user)
                 return render(request,
                               'data_wrapper/query_results.html',
                               {
-                                  'seqids': seqids
+                                  'seqids': seqids,
+                                  'saved_tables': saved_tables
                               })
 
     else:
@@ -129,6 +136,24 @@ def delete_query_confirm(request, query_id):
                       'query': query
                   }
                   )
+
+
+@login_required
+def delete_table_confirm(request, table_id):
+    table = get_object_or_404(SavedTables, pk=table_id)
+    return render(request,
+                  'data_wrapper/delete_table_confirm.html',
+                  {
+                      'table': table
+                  }
+                  )
+
+
+@login_required
+def delete_table(request, table_id):
+    table = get_object_or_404(SavedTables, pk=table_id)
+    table.delete()
+    return redirect('data_wrapper:saved_queries')
 
 
 @login_required
@@ -249,8 +274,13 @@ def resfinder_history(request, resfinder_id):
 
 @login_required
 def generic_table(request, table_attributes, seqid_list):
+    # table_attributes and seqid_list end up getting passed in as strings via the url.
+    # Need to convert them to lists to make this work.
+    table_attributes = ast.literal_eval(table_attributes)
+    seqid_list = ast.literal_eval(seqid_list)
     table_data = get_table_data(table_attributes=table_attributes,
                                 seqid_list=seqid_list)
+    table_attributes.insert(0, 'SEQID')
     return render(request,
                   'data_wrapper/generic_table.html',
                   {
@@ -306,18 +336,26 @@ def get_table_data(table_attributes, seqid_list):
                 if attribute in get_model_fields(m):
                     model = m
                     field = m._meta.get_field(attribute)
-            fieldname = str(field).split('.')[-1]
-            data = model.objects.filter(seqid=Sample.objects.get(seqid=seqid))
-            a = data.values_list(fieldname, flat=True)
-            if len(a) == 0:
+            try:
+                fieldname = str(field).split('.')[-1]
+                data = model.objects.filter(seqid=Sample.objects.get(seqid=seqid))
+                a = data.values_list(fieldname, flat=True)
+                # It's possible that some stuff won't be in the database (for example, you can have SeqData uploaded but
+                # no corresponding LSTS data) so, need to have this check to cover that case.
+                if len(a) == 0:
+                    data_to_add = 'NA'
+                # Most things should only have one entry - one n50, num_contigs per sample, etc.
+                elif len(a) == 1:
+                    data_to_add = a[0]
+                # Some things (i.e. resistance genes can have more than one entry per sample. Output those as a comma
+                # separated string.
+                else:
+                    data_to_add = ''
+                    for item in a:
+                        data_to_add += item + ','
+                    data_to_add = data_to_add[:-1]
+            except:
                 data_to_add = 'NA'
-            elif len(a) == 1:
-                data_to_add = a[0]
-            else:
-                data_to_add = ''
-                for item in a:
-                    data_to_add += item + ','
-                data_to_add = data_to_add[:-1]
             row_data.append(data_to_add)
         table_data.append(row_data)
     return table_data
