@@ -6,7 +6,7 @@
    <div class="alert alert-danger" role="alert" align="center">
      Are you sure you want to delete table <strong>{{ table.table_name }}</strong>? This action is irreversible.
    <hr>
-   <td><a href="{% url 'data_wrapper:saved_queries' %}" class="btn btn-primary" role="button">No, take me back to the query page.</a></td>
+   <td><a href="{% url 'data_wrapper:query_builder' %}" class="btn btn-primary" role="button">No, take me back to query builder.</a></td>
    <td><a href="{% url 'data_wrapper:delete_table' table_id=table.id %}" class="btn btn-danger" role="button">Yes, delete {{ table.table_name }}</a></td>
    </div>
 {% endblock %}

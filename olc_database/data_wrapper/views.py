@@ -212,10 +212,12 @@ def rerun_query(request, query_id):
                                     operations=query.search_operations,
                                     terms=query.search_terms,
                                     combine_operations=query.search_combine_operations)
+    saved_tables = SavedTables.objects.filter(user=request.user)
     return render(request,
                   'data_wrapper/query_results.html',
                   {
-                      'seqids': seqids
+                      'seqids': seqids,
+                      'saved_tables': saved_tables
                   })
 
 
