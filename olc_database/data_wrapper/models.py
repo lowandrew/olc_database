@@ -107,6 +107,19 @@ class LSTSData(models.Model):
         return self.lsts_id
 
 
+# TODO: Confirm that these are in fact the fields that we want.
+class SeqTracking(models.Model):
+    seqid = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='seq_tracking')
+    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, related_name='seq_tracking')
+    location = models.CharField(max_length=128)
+    oln_id = models.CharField(max_length=128)
+    project = models.CharField(max_length=128)
+    priority = models.CharField(max_length=128)
+    curator_flag = models.CharField(max_length=128)
+    comment = models.CharField(max_length=512)
+    history = HistoricalRecords()
+
+
 class ResFinderData(models.Model):
     seqid = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='resfinder_data')
     resfinder_gene = models.CharField(max_length=56)

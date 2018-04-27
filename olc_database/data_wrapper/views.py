@@ -2,9 +2,10 @@ from dal import autocomplete
 from django_tables2 import RequestConfig
 from django_tables2.columns import TemplateColumn
 from django.shortcuts import render, get_object_or_404, redirect
-from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries, SavedTables, SeqIdList
-from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm, CustomTableForm
-from .tables import SeqDataTable, ResFinderDataTable
+from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries, SavedTables, SeqIdList, SeqTracking
+from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm, CustomTableForm, \
+    SeqTrackingCreateForm, SeqTrackingEditForm
+from .tables import SeqDataTable, ResFinderDataTable, SeqTrackingTable
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
 
@@ -340,6 +341,100 @@ def resfinderdata_table(request):
                        'table': table
                   }
                   )
+
+
+@login_required
+def edit_data_seqtracking(request, seqtracking_id):
+    seqtracking = get_object_or_404(SeqTracking, pk=seqtracking_id)
+    seqtracking_form = SeqTrackingEditForm(instance=seqtracking)
+    if request.method == 'POST':
+        seqtracking_form = SeqTrackingEditForm(request.POST)
+        if seqtracking_form.is_valid():
+            # Have to do some fancy footwork here to make the change reason save with the other form data.
+            # Not entirely sure how this works, but it does, so I won't complain.
+            s = SeqTrackingEditForm(request.POST, instance=seqtracking)
+            change_reason = seqtracking_form.cleaned_data.get('change_reason')
+            with_reason = s.save(commit=False)
+            with_reason.changeReason = change_reason
+            s.save()
+            return redirect('data_wrapper:seqtracking_table')
+    else:
+        return render(request,
+                      'data_wrapper/edit_data_seqtracking.html',
+                      {'seqtracking_form': seqtracking_form},
+                      )
+
+
+@login_required
+def create_data_seqtracking(request):
+    seqtracking_form = SeqTrackingCreateForm()
+    if request.method == 'POST':
+        seqtracking_form = SeqTrackingCreateForm(request.POST)
+        if seqtracking_form.is_valid():
+            seqid = seqtracking_form.cleaned_data.get('seqid')
+            lsts_id = seqtracking_form.cleaned_data.get('lsts_id')
+            location = seqtracking_form.cleaned_data.get('location')
+            oln_id = seqtracking_form.cleaned_data.get('oln_id')
+            project = seqtracking_form.cleaned_data.get('project')
+            priority = seqtracking_form.cleaned_data.get('priority')
+            curator_flag = seqtracking_form.cleaned_data.get('curator_flag')
+            comment = seqtracking_form.cleaned_data.get('comment')
+            sample_exists = Sample.objects.filter(seqid=seqid).exists()
+            lsts_exists = LSTSData.objects.filter(lsts_id=lsts_id).exists()
+            if not sample_exists:
+                Sample.objects.create(seqid=seqid)
+            if not lsts_exists:
+                LSTSData.objects.create(lsts_id=lsts_id,
+                                        seqid=Sample.objects.get(seqid=seqid))
+            SeqTracking.objects.create(seqid=Sample.objects.get(seqid=seqid),
+                                       lsts_id=LSTSData.objects.get(lsts_id=lsts_id),
+                                       location=location,
+                                       oln_id=oln_id,
+                                       project=project,
+                                       priority=priority,
+                                       curator_flag=curator_flag,
+                                       comment=comment)
+            return render(request,
+                          'data_wrapper/create_data_seqtracking.html',
+                          {
+                              'seqtracking_form': seqtracking_form
+                          })
+    return render(request,
+                  'data_wrapper/create_data_seqtracking.html',
+                  {
+                      'seqtracking_form': seqtracking_form
+                  })
+
+
+@login_required
+def seqtracking_history(request, seqtracking_id):
+    seqtracking = get_object_or_404(SeqTracking, pk=seqtracking_id)
+    histories = seqtracking.history.all()
+    table = SeqTrackingTable(histories,
+                             extra_columns=[('Date Changed', TemplateColumn('{{ record.history_date }}')),
+                                            ('Changed By', TemplateColumn('{{ record.history_user }}')),
+                                            ('Change Reason', TemplateColumn('{{ record.history_change_reason }}'))])
+    RequestConfig(request).configure(table)
+    return render(request,
+                  'data_wrapper/seqtracking_history.html',
+                  {
+                      'seqtracking': seqtracking,
+                      'table': table,
+                  })
+
+
+@login_required
+def seqtracking_table(request):
+    table = SeqTrackingTable(SeqTracking.objects.all(),
+                             extra_columns=[('Edit', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_seqtracking\' seqtracking_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>')),
+                                            ('History', TemplateColumn('<a href="{% url \'data_wrapper:seqtracking_history\' seqtracking_id=record.pk %}" class="btn btn-outline-dark" role="button" aria-pressed="true">View History</a>'))])
+
+    RequestConfig(request, paginate=False).configure(table)
+    return render(request,
+                  'data_wrapper/seqtracking_table.html',
+                  {
+                      'table': table
+                  })
 
 
 def get_table_data(table_attributes, seqid_list):

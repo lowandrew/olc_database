@@ -1,5 +1,5 @@
 import django_tables2 as tables
-from data_wrapper.models import SeqData, ResFinderData
+from data_wrapper.models import SeqData, ResFinderData, SeqTracking
 
 
 class SeqDataTable(tables.Table):
@@ -15,3 +15,9 @@ class ResFinderDataTable(tables.Table):
         attrs = {'id': 'resfinderdata-table',
                  'class': 'table table-hover table-border compact'}
 
+
+class SeqTrackingTable(tables.Table):
+    class Meta:
+        model = SeqTracking
+        attrs = {'id': 'seqtracking-table',
+                 'class': 'table table-hover table-border compact'}

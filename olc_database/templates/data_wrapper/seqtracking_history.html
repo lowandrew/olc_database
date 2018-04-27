@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load render_table from django_tables2 %}
+{% block content %}
+  <br>
+  <h2>SeqTracking History for {{ seqtracking.seqid }}</h2>
+  <br>
+  {% render_table table %}
+  <br>
+  <a href="{% url 'data_wrapper:seqtracking_table' %}" class="btn btn-dark" role="button" aria-pressed="true">Return to SeqTracking Table</a>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.4/css/jquery.dataTables.min.css">
+  <script type="text/javascript" src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
+  <script type="text/javascript">
+      $(document).ready( function () {
+        $.noConflict();  // For some reason datatable won't load until I add this, which the internet says is because
+        // I have multiple versions of jQuery present somehow. However, when I don't have jQuery loaded here,
+        // I get an error saying that jQuery isn't present when I try to use datatables. Go figure.
+        $('#seqtracking-table').dataTable(
+          {
+            "pageLength": 50,
+            "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ]
+          }
+        );
+        colorTableChanges();
+      });
+      // The following will color cells that have changed so that users can more easily track changes as they've
+      // gone through.
+      // Also, this should get put somewhere where it can be loaded into multiple pages, so we don't end up repeating
+      // things way more than we should
+      function colorTableChanges() {
+          var table = document.getElementById('seqtracking-table');
+          var num_columns = table.rows[0].cells.length;
+          var num_rows = $('#seqtracking-table tr').length;
+          if(num_rows > 1){
+              for(var i=1; i<num_rows; i++){
+                for(var j=0; j<num_columns; j++){
+                   var cell1 = table.rows[i].cells[j];
+                   var cell2 = table.rows[i + 1].cells[j];
+                   if(j >= num_columns - 3){
+                     cell1.classList.add('alert-secondary');
+                     cell2.classList.add('alert-secondary');
+                   }
+                   else {
+                     if (cell1.innerHTML !== cell2.innerHTML) {
+                       cell1.classList.add('alert-info');
+                       cell2.classList.add('alert-info');
+                     }
+                   }
+                }
+              }
+          }
+      }
+      </script>
+{% endblock %}

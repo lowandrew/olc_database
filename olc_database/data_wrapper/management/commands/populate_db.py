@@ -14,6 +14,17 @@ def read_combined_metadata(data_folder):
                 Sample.objects.get(seqid=row['SeqID'])
             except:
                 Sample.objects.create(seqid=row['SeqID'])
+
+            # Sometimes people forget about the InterOp folder. Without that, phix and error rate can't be calculated.
+            # If that happens, set those values to -1
+            if row['PercentReadsPhiX'] == 'ND' or row['PercentReadsPhiX'] == '-':
+                phix = -1.0
+            else:
+                phix = row['PercentReadsPhiX']
+            if row['ErrorRate'] == 'ND' or row['ErrorRate'] == '-':
+                error_rate = -1.0
+            else:
+                error_rate = row['ErrorRate']
             # Now go through and add metadata from the combinedMetadata to our SeqData
             SeqData.objects.update_or_create(seqid=Sample.objects.get(seqid=row['SeqID']),
                                              genus=row['Genus'],
@@ -59,8 +70,8 @@ def read_combined_metadata(data_folder):
                                              predicted_genes_over_500=row['PredictedGenesOver500bp'],
                                              predicted_genes_under_500=row['PredictedGenesUnder500bp'],
                                              num_clusters_pf=row['NumClustersPF'],
-                                             percent_reads_phix=row['PercentReadsPhiX'],
-                                             error_rate=row['ErrorRate'],
+                                             percent_reads_phix=phix,
+                                             error_rate=error_rate,
                                              length_forward_read=row['LengthForwardRead'],
                                              length_reverse_read=row['LengthReverseRead'],
                                              real_time_strain=row['RealTimeStrain'],
@@ -74,6 +85,8 @@ def read_combined_metadata(data_folder):
 def read_resfinder(data_folder):
     df = pd.read_excel(os.path.join(data_folder, 'resfinder_assembled.xlsx'))
     for i in df.index:
+        if pd.isnull(df.loc[i]['Strain']):
+            continue
         # Add Sample to database if it doesn't already exist for some
         try:
             Sample.objects.get(seqid=df['Strain'][i])

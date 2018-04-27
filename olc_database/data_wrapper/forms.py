@@ -1,7 +1,8 @@
+import re
 from django import forms
 from dal import autocomplete
 from django.forms.formsets import BaseFormSet
-from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData
+from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SeqTracking
 
 
 def get_model_fields(model):
@@ -22,12 +23,65 @@ def make_list_of_fields():
     return fields
 
 
+class SeqTrackingEditForm(forms.ModelForm):
+    class Meta:
+        model = SeqTracking
+        fields = get_model_fields(SeqTracking)
+
+    change_reason = forms.CharField(max_length=128)
+
+
 class ResFinderDataForm(forms.ModelForm):
     class Meta:
         model = ResFinderData
         fields = get_model_fields(ResFinderData)
 
     change_reason = forms.CharField(max_length=128)
+
+
+class SeqTrackingCreateForm(forms.Form):
+    LOCATION_CHOICES = (
+        ('BMH', 'BMH'),
+        ('BUR', 'BUR'),
+        ('CAL', 'CAL'),
+        ('DAR', 'DAR'),
+        ('GTA', 'GTA'),
+        ('LON', 'LON'),
+        ('MER', 'MER'),
+        ('NML', 'NML'),
+        ('OLC', 'OLC'),
+        ('OLF', 'OLF'),
+        ('OTT', 'OTT'),
+        ('STH', 'STH')
+    )
+    PRIORITY_CHOICES = (
+        ('IMMEDIATE', 'IMMEDIATE'),
+        ('REAL-TIME', 'REAL-TIME'),
+        ('RESEARCH', 'RESEARCH')
+    )
+    CURATOR_FLAG_CHOICES = (
+        ('PASS', 'PASS'),
+        ('REFERENCE', 'REFERENCE'),
+        ('FAIL', 'FAIL'),
+        ('QUANTIFIED', 'QUANTIFIED'),
+        ('SEQUENCING', 'SEQUENCING'),
+        ('SEQUENCED', 'SEQUENCED'),
+        ('METAGENOME', 'METAGENOME'),
+    )
+    seqid = forms.CharField(max_length=128)
+    lsts_id = forms.CharField(max_length=128)
+    location = forms.ChoiceField(choices=LOCATION_CHOICES)
+    oln_id = forms.CharField(max_length=128)
+    project = forms.CharField(max_length=128)
+    priority = forms.ChoiceField(choices=PRIORITY_CHOICES)
+    curator_flag = forms.ChoiceField(choices=CURATOR_FLAG_CHOICES)
+    comment = forms.CharField(max_length=128, required=False)
+
+    def clean_seqid(self):
+        seqid = self.cleaned_data['seqid']
+        if not re.match('\d{4}-[A-Z]+-\d{4}', seqid):
+            raise forms.ValidationError('Invalid SEQID format. Correct format is YYYY-LAB-####')
+        return seqid
 
 
 class SeqDataForm(forms.ModelForm):
