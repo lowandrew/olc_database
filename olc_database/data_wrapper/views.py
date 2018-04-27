@@ -9,6 +9,7 @@ from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
 
 
+# This view is needed to make autocomplete for table/query builder work.
 class AttributeAutocompleteFromList(autocomplete.Select2ListView):
     def get_list(self):
         return make_list_of_fields()

@@ -32,46 +32,29 @@ Setting Up Your Users
 
 For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
 
-Test coverage
+Testing!
 ^^^^^^^^^^^^^
 
-To run the tests, check your test coverage, and generate an HTML coverage report::
+To run the tests for the data_wrapper app::
 
-    $ coverage run manage.py test
-    $ coverage html
-    $ open htmlcov/index.html
-
-Running tests with py.test
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-::
-
-  $ py.test
-
-Live reloading and Sass CSS compilation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Moved to `Live reloading and SASS compilation`_.
-
-.. _`Live reloading and SASS compilation`: http://cookiecutter-django.readthedocs.io/en/latest/live-reloading-and-sass-compilation.html
-
-
+ $ docker-compose -f local.yml run --rm django python manage.py test data_wrapper
 
 
 
 Deployment
 ----------
 
-The following details how to deploy this application.
+The following details how to deploy this application. You'll need docker and docker-compose!
+
+Local deployment::
+
+ $ docker-compose -f local.yml build
+ $ docker-compose -f local.yml up
+
+You should also make and run migrations::
+
+ $ docker-compose -f local.yml run --rm django python manage.py makemigrations
+ $ docker-compose -f local.yml run --rm django python manage.py migrate
 
 
-
-Docker
-^^^^^^
-
-See detailed `cookiecutter-django Docker documentation`_.
-
-.. _`cookiecutter-django Docker documentation`: http://cookiecutter-django.readthedocs.io/en/latest/deployment-with-docker.html
-
-
-
+With that done, just head to 0.0.0.0:8000 in your browser, and you should be good to go.
