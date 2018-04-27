@@ -42,6 +42,11 @@ class CustomTableForm(forms.Form):
     table_attribute = autocomplete.Select2ListChoiceField(choice_list=make_list_of_fields,
                                                           widget=autocomplete.ListSelect2(url='data_wrapper:attribute-autocomplete'),
                                                           required=True)
+    # Apparently when a form is completely blank in a formset, Django skips doing validation of it.
+    # My hacky solution: Create another attribute to the form that defaults to a non-blank value, forcing
+    # validation of the blank attribute. This hidden attribute is never displayed to the user.
+    # A quick google didn't turn up a better way to solve the problem, but a better solution does probably exist.
+    hidden_attribute = forms.CharField(max_length=1, required=False, empty_value='a')
 
 
 class SearchForm(forms.Form):
@@ -60,7 +65,6 @@ class SearchForm(forms.Form):
         ('AND', 'AND'),
         ('OR', 'OR')
     )
-    # search_attribute = forms.CharField(label='Search term', max_length=100)
     search_attribute = autocomplete.Select2ListChoiceField(choice_list=make_list_of_fields,
                                                            widget=autocomplete.ListSelect2(url='data_wrapper:attribute-autocomplete'),
                                                            required=True)

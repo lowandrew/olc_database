@@ -20,6 +20,12 @@
   {{ table_formset.management_form }}
   {% for table_form in table_formset %}
     <div class="table-formset">
+      {% if table_form.table_attribute.errors %}
+        <br>
+        <div class="alert alert-danger" style="width:300px; height: 50px;">
+          {{ table_form.table_attribute.errors }}
+        </div>
+      {% endif %}
       {{ table_form.table_attribute }}
     </div>
   {% endfor %}

@@ -32,20 +32,21 @@ def table_builder(request):
         if table_formset.is_valid():
             for table_form in table_formset:
                 terms.append(table_form.cleaned_data.get('table_attribute'))
-        seqid_list = list(Sample.objects.values_list('seqid', flat=True))
-        table_data = get_table_data(table_attributes=terms,
-                                    seqid_list=seqid_list)
-        if save_query == 'Yes':
-            SavedTables.objects.create(user=request.user,
-                                       table_attributes=terms,
-                                       table_name=query_name)
-        terms.insert(0, 'SEQID')
-        return render(request,
-                      'data_wrapper/generic_table.html',
-                      {
-                          'table_data': table_data,
-                          'table_attributes': terms
-                      })
+            seqid_list = list(Sample.objects.values_list('seqid', flat=True))
+            table_data = get_table_data(table_attributes=terms,
+                                        seqid_list=seqid_list)
+            if save_query == 'Yes':
+                SavedTables.objects.create(user=request.user,
+                                           table_attributes=terms,
+                                           table_name=query_name)
+            terms.insert(0, 'SEQID')
+            return render(request,
+                          'data_wrapper/generic_table.html',
+                          {
+                              'table_data': table_data,
+                              'table_attributes': terms
+                          })
+
     else:
         table_formset = TableFormSet()
     return render(request,
