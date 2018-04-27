@@ -237,8 +237,13 @@ def query_details(request, query_id):
     query_detail_list = list()
     for i in range(len(query.search_terms)):
         if i < len(query.search_terms) - 1:
-            query_detail_list.append(query.search_attributes[i] + ' ' + query.search_operations[i] +
-                                     ' ' + query.search_terms[i] + ' ' + query.search_combine_operations[i])
+            if query.search_combine_operations[i] == 'OR':
+                query_detail_list.append(query.search_attributes[i] + ' ' + query.search_operations[i] +
+                                         ' ' + query.search_terms[i])
+                query_detail_list.append(query.search_combine_operations[i])
+            else:
+                query_detail_list.append(query.search_attributes[i] + ' ' + query.search_operations[i] +
+                                         ' ' + query.search_terms[i] + ' ' + query.search_combine_operations[i])
         else:
             query_detail_list.append(query.search_attributes[i] + ' ' + query.search_operations[i] +
                                      ' ' + query.search_terms[i])
@@ -370,9 +375,9 @@ def get_table_data(table_attributes, seqid_list):
 
 def decipher_input_request(attributes, operations, terms, combine_operations):
     # NOTE: This may not be a good way to do things at all, but as a proof of concept it seems to work.
-    # TODO: Become a database expert so you know if this is actually a good idea.
     samples = Sample.objects.all()
     models = [Sample, SeqData, LSTSData, ResFinderData]
+    seqids = list()
     for i in range(len(attributes)):
         # Step 1: Find which model/field we're pulling stuff from.
         for m in models:
@@ -396,7 +401,7 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             try:
                 term_as_integer = int(terms[i])
             except ValueError:
-                return ['ERROR: When using a greater than or less than operation, you must enter a number.'
+                return ['ERROR: When using a GREATER THAN or LESS THAN operation, you must enter a number.'
                         ' Please try again.']
             # Also make sure that field type is valid - can't call greater or less than on a charfield
             if field_type != 'IntegerField' and field_type != 'FloatField':
@@ -420,25 +425,56 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
                 return ['ERROR: BEFORE and AFTER operations must be used on DateFields. {fieldname} is '
                         ' a {field_type}'.format(fieldname=fieldname,
                                                  field_type=field_type)]
-            queryset = queryset.filter(**{fieldname + '__lt': terms[i]})
+            try:
+                queryset = queryset.filter(**{fieldname + '__lt': terms[i]})
+            except:
+                return ['ERROR: Date format must be YYYY-MM-DD. Please re-enter your date in that format and try again.']
         elif operations[i] == 'AFTER':
             if field_type != 'DateField':
                 return ['ERROR: BEFORE and AFTER operations must be used on DateFields. {fieldname} is '
                         ' a {field_type}'.format(fieldname=fieldname,
                                                  field_type=field_type)]
-            queryset = queryset.filter(**{fieldname + '__gt': terms[i]})
-
+            try:
+                queryset = queryset.filter(**{fieldname + '__gt': terms[i]})
+            except:
+                return ['ERROR: Date format must be YYYY-MM-DD. Please re-enter your date in that format and try again.']
         queryset_seqids = list()
         for item in queryset:
             queryset_seqids.append(str(item.seqid))
-        for sample in samples:
-            if sample.seqid not in queryset_seqids:
-                samples = samples.exclude(seqid=sample.seqid)
 
-    seqids = list()
-    for sample in samples:
-        seqids.append(sample.seqid)
-    return seqids
+        # At this point we've filtered based on greaterthan/lessthan/contains for one query. Now need to decide what
+        # to do based on whether an and or an or happened.
+        # First thing - if this is our last operation, AND vs OR doesn't matter.
+        if i == len(combine_operations) - 1:
+            new_list = list()
+            for sample in samples:
+                if sample.seqid not in queryset_seqids:
+                    samples = samples.exclude(seqid=sample.seqid)
+            for sample in samples:
+                new_list.append(sample.seqid)
+            seqids.append(new_list)
+        # Next case: AND - just keep going and filter queryset to be used in our next query down further.
+        elif combine_operations[i] == 'AND':
+            for sample in samples:
+                if sample.seqid not in queryset_seqids:
+                    samples = samples.exclude(seqid=sample.seqid)
+        # Final case: OR - we'll need to generate a list of SEQIDs for this query and then refresh the sample set.
+        elif combine_operations[i] == 'OR':
+            new_list = list()
+            for sample in samples:
+                if sample.seqid not in queryset_seqids:
+                    samples = samples.exclude(seqid=sample.seqid)
+            for sample in samples:
+                new_list.append(sample.seqid)
+            seqids.append(new_list)
+            samples = Sample.objects.all()
+
+    query_result = list()
+    for seqid_list in seqids:
+        for seqid in seqid_list:
+            if seqid not in query_result:
+                query_result.append(seqid)
+    return query_result
 
 
 def get_model_fields(model):

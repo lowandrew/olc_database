@@ -10,9 +10,15 @@
     <tbody>
       {% for detail in query_detail_list %}
         <tr>
-          <td>{{ detail }}</td>
+          {% if detail == 'OR' %}
+            <td><strong>{{ detail }}</strong></td>
+          {% else %}
+            <td>{{ detail }}</td>
+          {% endif %}
         </tr>
       {% endfor %}
     </tbody>
   </table>
+  <br>
+  <a href="{% url 'data_wrapper:saved_queries' %}" class="btn btn-dark" role="button" aria-pressed="true">Return to Saved Queries</a>
 {% endblock %}

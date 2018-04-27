@@ -58,7 +58,7 @@ class SearchForm(forms.Form):
 
     AND_OR_CHOICES = (
         ('AND', 'AND'),
-        # ('OR', 'OR')  # Also TODO: Add this in to the query builder once you figure out logic for it.
+        ('OR', 'OR')
     )
     # search_attribute = forms.CharField(label='Search term', max_length=100)
     search_attribute = autocomplete.Select2ListChoiceField(choice_list=make_list_of_fields,
