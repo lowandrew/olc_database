@@ -143,6 +143,9 @@ def saved_queries(request):
 @login_required
 def delete_query_confirm(request, query_id):
     query = get_object_or_404(SavedQueries, pk=query_id)
+    if request.user != query.user:
+        return render(request,
+                      '403.html')
     return render(request,
                   'data_wrapper/delete_query_confirm.html',
                   {
@@ -154,6 +157,9 @@ def delete_query_confirm(request, query_id):
 @login_required
 def delete_table_confirm(request, table_id):
     table = get_object_or_404(SavedTables, pk=table_id)
+    if request.user != table.user:
+        return render(request,
+                      '403.html')
     return render(request,
                   'data_wrapper/delete_table_confirm.html',
                   {
