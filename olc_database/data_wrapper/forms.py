@@ -23,6 +23,20 @@ def make_list_of_fields():
     return fields
 
 
+class CsvUploadForm(forms.Form):
+    csv_file = forms.FileField()
+
+    def clean_csv_file(self):
+        # Make sure that the CSV file isn't giant (no way anything should ever be over 10 MB) and
+        # that it actually ends with .csv
+        csv_file = self.cleaned_data['csv_file']
+        if csv_file.size > 10000000:
+            raise forms.ValidationError('Filesize must be less than 10MB.')
+        if not csv_file.name.endswith('.csv'):
+            raise forms.ValidationError('File extension must be .csv')
+        return csv_file
+
+
 class SeqTrackingEditForm(forms.ModelForm):
     class Meta:
         model = SeqTracking

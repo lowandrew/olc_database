@@ -8,6 +8,7 @@ from olc_database.data_wrapper import views
 app_name = 'data_wrapper'
 urlpatterns = [
     url(r'^query_builder$', views.query_builder, name='query_builder'),
+    url(r'^upload_seqtracking_csv$', views.upload_seqtracking_csv, name='upload_seqtracking_csv'),
     url(r'^create_data_seqtracking$', views.create_data_seqtracking, name='create_data_seqtracking'),
     url(r'^generic_table/table-(?P<table_id>\d+)/seqid-(?P<seqid_id>\d+)/$', views.generic_table, name='generic_table'),
     url(r'^table_builder$', views.table_builder, name='table_builder'),

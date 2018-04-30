@@ -1,10 +1,11 @@
+import csv
 from dal import autocomplete
 from django_tables2 import RequestConfig
 from django_tables2.columns import TemplateColumn
 from django.shortcuts import render, get_object_or_404, redirect
 from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries, SavedTables, SeqIdList, SeqTracking
 from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm, CustomTableForm, \
-    SeqTrackingCreateForm, SeqTrackingEditForm
+    SeqTrackingCreateForm, SeqTrackingEditForm, CsvUploadForm
 from .tables import SeqDataTable, ResFinderDataTable, SeqTrackingTable
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
@@ -437,6 +438,33 @@ def seqtracking_table(request):
                   {
                       'table': table
                   })
+
+
+@login_required
+def upload_seqtracking_csv(request):
+    form = CsvUploadForm()
+    if request.method == 'POST':
+        form = CsvUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Will need to decide what columns and whatnot will need to be in CSV file - this whole process will have
+            # to be refined.
+            csv_file = request.FILES['csv_file']
+            reader = csv.DictReader(csv_file.read().decode('utf-8'))
+            for row in reader:
+                print(row)
+            messages.success(request, 'File was uploaded! :D')
+            return redirect('data_wrapper:seqtracking_table')
+        return render(request,
+                      'data_wrapper/upload_seqtracking_csv.html',
+                      {
+                          'form': form
+                      })
+    else:
+        return render(request,
+                      'data_wrapper/upload_seqtracking_csv.html',
+                      {
+                          'form': form
+                      })
 
 
 def get_table_data(table_attributes, seqid_list):
