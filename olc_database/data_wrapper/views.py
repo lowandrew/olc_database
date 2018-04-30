@@ -8,6 +8,7 @@ from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataFo
 from .tables import SeqDataTable, ResFinderDataTable, SeqTrackingTable
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 
 # This view is needed to make autocomplete for table/query builder work.
@@ -386,19 +387,20 @@ def create_data_seqtracking(request):
             if not lsts_exists:
                 LSTSData.objects.create(lsts_id=lsts_id,
                                         seqid=Sample.objects.get(seqid=seqid))
-            SeqTracking.objects.create(seqid=Sample.objects.get(seqid=seqid),
-                                       lsts_id=LSTSData.objects.get(lsts_id=lsts_id),
-                                       location=location,
-                                       oln_id=oln_id,
-                                       project=project,
-                                       priority=priority,
-                                       curator_flag=curator_flag,
-                                       comment=comment)
-            return render(request,
-                          'data_wrapper/create_data_seqtracking.html',
-                          {
-                              'seqtracking_form': seqtracking_form
-                          })
+            try:
+                SeqTracking.objects.update_or_create(seqid=Sample.objects.get(seqid=seqid),
+                                                     lsts_id=LSTSData.objects.get(lsts_id=lsts_id),
+                                                     location=location,
+                                                     oln_id=oln_id,
+                                                     project=project,
+                                                     priority=priority,
+                                                     curator_flag=curator_flag,
+                                                     comment=comment)
+            except:  # If SeqTracking object with specified SEQID or LSTS ID already exists, don't create.
+                messages.error(request, 'ERROR: A SeqTracking entry already exists for either the SeqID or LSTS ID '
+                                        'specified. Please verify what you have entered and try again.')
+                pass
+            return redirect('data_wrapper:seqtracking_table')
     return render(request,
                   'data_wrapper/create_data_seqtracking.html',
                   {
@@ -439,7 +441,7 @@ def seqtracking_table(request):
 
 def get_table_data(table_attributes, seqid_list):
     table_data = list()
-    models = [SeqData, LSTSData, ResFinderData]
+    models = [SeqData, LSTSData, ResFinderData, SeqTracking]
     for seqid in seqid_list:
         row_data = list()
         row_data.append(seqid)
@@ -473,7 +475,7 @@ def get_table_data(table_attributes, seqid_list):
 def decipher_input_request(attributes, operations, terms, combine_operations):
     # NOTE: This may not be a good way to do things at all, but as a proof of concept it seems to work.
     samples = Sample.objects.all()
-    models = [Sample, SeqData, LSTSData, ResFinderData]
+    models = [Sample, SeqData, LSTSData, ResFinderData, SeqTracking]
     seqids = list()
     for i in range(len(attributes)):
         # Step 1: Find which model/field we're pulling stuff from.
@@ -584,7 +586,7 @@ def get_model_fields(model):
 
 def make_list_of_fields():
     fields = list()  # Would use a set here, but django-autocomplete-light wants a list.
-    models = [Sample, SeqData, LSTSData, ResFinderData]
+    models = [Sample, SeqData, LSTSData, ResFinderData, SeqTracking]
     for model in models:
         for field in get_model_fields(model):
             if field not in fields:

@@ -109,8 +109,8 @@ class LSTSData(models.Model):
 
 # TODO: Confirm that these are in fact the fields that we want.
 class SeqTracking(models.Model):
-    seqid = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='seq_tracking')
-    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, related_name='seq_tracking')
+    seqid = models.OneToOneField(Sample, on_delete=models.CASCADE, related_name='seq_tracking_seqid')
+    lsts_id = models.OneToOneField(LSTSData, on_delete=models.CASCADE, related_name='seq_tracking_lstsid')
     location = models.CharField(max_length=128)
     oln_id = models.CharField(max_length=128)
     project = models.CharField(max_length=128)
@@ -118,6 +118,9 @@ class SeqTracking(models.Model):
     curator_flag = models.CharField(max_length=128)
     comment = models.CharField(max_length=512)
     history = HistoricalRecords()
+
+    def __str__(self):
+        return self.seqid.seqid
 
 
 class ResFinderData(models.Model):

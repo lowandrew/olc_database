@@ -15,7 +15,7 @@ def get_model_fields(model):
 
 def make_list_of_fields():
     fields = list()  # Would use a set here, but django-autocomplete-light wants a list.
-    models = [Sample, SeqData, LSTSData, ResFinderData]
+    models = [Sample, SeqData, LSTSData, ResFinderData, SeqTracking]
     for model in models:
         for field in get_model_fields(model):
             if field not in fields:
