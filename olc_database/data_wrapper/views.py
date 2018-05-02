@@ -171,6 +171,9 @@ def delete_table_confirm(request, table_id):
 @login_required
 def delete_table(request, table_id):
     table = get_object_or_404(SavedTables, pk=table_id)
+    if request.user != table.user:
+        return render(request,
+                      '403.html')
     table.delete()
     return redirect('data_wrapper:saved_queries')
 
@@ -210,6 +213,11 @@ def edit_data_seqdata(request, seqdata_id):
             with_reason.changeReason = change_reason
             s.save()
             return redirect('data_wrapper:seqdata_table')
+        else:
+            return render(request,
+                          'data_wrapper/edit_data_seqdata.html',
+                          {'seqdata_form': seqdata_form},
+                          )
     else:
         return render(request,
                       'data_wrapper/edit_data_seqdata.html',
@@ -220,6 +228,9 @@ def edit_data_seqdata(request, seqdata_id):
 @login_required
 def delete_query(request, query_id):
     query = get_object_or_404(SavedQueries, pk=query_id)
+    if request.user != query.user:
+        return render(request,
+                      '403.html')
     query.delete()
     return redirect('data_wrapper:saved_queries')
 
