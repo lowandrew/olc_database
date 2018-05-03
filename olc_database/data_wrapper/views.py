@@ -3,7 +3,8 @@ from dal import autocomplete
 from django_tables2 import RequestConfig
 from django_tables2.columns import TemplateColumn
 from django.shortcuts import render, get_object_or_404, redirect
-from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SavedQueries, SavedTables, SeqIdList, SeqTracking
+from data_wrapper.models import LSTSData, SeqData, ResFinderData, SavedQueries, SavedTables, SeqIdList, SeqTracking, \
+    OLN, CultureData
 from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm, CustomTableForm, \
     SeqTrackingCreateForm, SeqTrackingEditForm, CsvUploadForm
 from .tables import SeqDataTable, ResFinderDataTable, SeqTrackingTable

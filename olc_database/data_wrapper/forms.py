@@ -2,7 +2,7 @@ import re
 from django import forms
 from dal import autocomplete
 from django.forms.formsets import BaseFormSet
-from data_wrapper.models import LSTSData, Sample, SeqData, ResFinderData, SeqTracking
+from data_wrapper.models import LSTSData, SeqData, ResFinderData, SeqTracking, OLN, CultureData
 
 
 def get_model_fields(model):
@@ -15,7 +15,7 @@ def get_model_fields(model):
 
 def make_list_of_fields():
     fields = list()  # Would use a set here, but django-autocomplete-light wants a list.
-    models = [Sample, SeqData, LSTSData, ResFinderData, SeqTracking]
+    models = [SeqData, LSTSData, ResFinderData, SeqTracking, OLN, CultureData]
     for model in models:
         for field in get_model_fields(model):
             if field not in fields:
@@ -54,20 +54,6 @@ class ResFinderDataForm(forms.ModelForm):
 
 
 class SeqTrackingCreateForm(forms.Form):
-    LOCATION_CHOICES = (
-        ('BMH', 'BMH'),
-        ('BUR', 'BUR'),
-        ('CAL', 'CAL'),
-        ('DAR', 'DAR'),
-        ('GTA', 'GTA'),
-        ('LON', 'LON'),
-        ('MER', 'MER'),
-        ('NML', 'NML'),
-        ('OLC', 'OLC'),
-        ('OLF', 'OLF'),
-        ('OTT', 'OTT'),
-        ('STH', 'STH')
-    )
     PRIORITY_CHOICES = (
         ('IMMEDIATE', 'IMMEDIATE'),
         ('REAL-TIME', 'REAL-TIME'),
@@ -83,10 +69,8 @@ class SeqTrackingCreateForm(forms.Form):
         ('METAGENOME', 'METAGENOME'),
     )
     seqid = forms.CharField(max_length=128)
-    lsts_id = forms.CharField(max_length=128)
-    location = forms.ChoiceField(choices=LOCATION_CHOICES)
-    oln_id = forms.CharField(max_length=128)
-    project = forms.CharField(max_length=128)
+    lsts_id = forms.CharField(max_length=128, required=False)
+    oln_id = forms.CharField(max_length=128, required=False)
     priority = forms.ChoiceField(choices=PRIORITY_CHOICES)
     curator_flag = forms.ChoiceField(choices=CURATOR_FLAG_CHOICES)
     comment = forms.CharField(max_length=128, required=False)
@@ -150,7 +134,7 @@ class SearchForm(forms.Form):
 class QuerySaveForm(forms.Form):
     CHOICES = (('Yes', 'Yes'),
                ('No', 'No'))
-    query_name = forms.CharField(max_length=256, required=False)  # This may be a bad idea. Change to True, maybe.
+    query_name = forms.CharField(max_length=256, required=False)
     save_query = forms.ChoiceField(choices=CHOICES,
                                    initial='No')
 

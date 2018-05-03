@@ -5,18 +5,12 @@ from simple_history.models import HistoricalRecords
 
 
 # Create your models here.
-class Sample(models.Model):
-    seqid = models.CharField(max_length=56)
-    history = HistoricalRecords()
-
-    def __str__(self):
-        return self.seqid
-
 
 class SeqIdList(models.Model):
     seqid_list = ArrayField(models.CharField(max_length=48))
 
 
+# Both this and SavedTables are probably good to stay
 class SavedQueries(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     search_terms = ArrayField(models.CharField(max_length=48))
@@ -38,8 +32,37 @@ class SavedTables(models.Model):
         return self.table_name
 
 
+# This is pretty much a placeholder model - to be updated once imports of data from LSTS get wholly figured out.
+class LSTSData(models.Model):
+    lsts_id = models.CharField(max_length=88)
+    country_of_origin = models.CharField(max_length=128)
+    food = models.CharField(max_length=128)
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return self.lsts_id
+
+
+class OLN(models.Model):
+    oln_id = models.CharField(max_length=64)
+    lsts_id = models.OneToOneField(LSTSData, on_delete=models.CASCADE, null=True)
+    other_id = models.CharField(max_length=64)
+    oln_genus = models.CharField(max_length=64)
+    oln_species = models.CharField(max_length=64)
+    oln_subspecies = models.CharField(max_length=64)
+    oln_serotype = models.CharField(max_length=64)
+    oln_verotoxin = models.CharField(max_length=64)
+    oln_source = models.CharField(max_length=64)
+    oneenzyme = models.CharField(max_length=64)
+    twoenzyme = models.CharField(max_length=64)
+
+    history = HistoricalRecords()
+
+
 class SeqData(models.Model):
-    seqid = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='seqdata')
+    seqid = models.CharField(max_length=64)
+    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True)
+    oln_id = models.ForeignKey(OLN, on_delete=models.CASCADE, null=True)
     genus = models.CharField(max_length=128)
     n50 = models.IntegerField()
     num_contigs = models.IntegerField()
@@ -96,24 +119,11 @@ class SeqData(models.Model):
     history = HistoricalRecords()
 
 
-class LSTSData(models.Model):
-    seqid = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='lsts_data')
-    lsts_id = models.CharField(max_length=88)
-    country_of_origin = models.CharField(max_length=128)
-    food = models.CharField(max_length=128)
-    history = HistoricalRecords()
-
-    def __str__(self):
-        return self.lsts_id
-
-
-# TODO: Confirm that these are in fact the fields that we want.
 class SeqTracking(models.Model):
-    seqid = models.OneToOneField(Sample, on_delete=models.CASCADE, related_name='seq_tracking_seqid')
-    lsts_id = models.OneToOneField(LSTSData, on_delete=models.CASCADE, related_name='seq_tracking_lstsid')
-    location = models.CharField(max_length=128)
-    oln_id = models.CharField(max_length=128)
-    project = models.CharField(max_length=128)
+    seqid = models.OneToOneField(SeqData, on_delete=models.CASCADE, null=True)  # Allow null as we SeqTracking should be
+    # happening before we actually receive SeqDataCharField
+    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True)
+    oln_id = models.ForeignKey(OLN, on_delete=models.CASCADE, null=True)
     priority = models.CharField(max_length=128)
     curator_flag = models.CharField(max_length=128)
     comment = models.CharField(max_length=512)
@@ -124,7 +134,7 @@ class SeqTracking(models.Model):
 
 
 class ResFinderData(models.Model):
-    seqid = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='resfinder_data')
+    seqid = models.OneToOneField(SeqData, on_delete=models.CASCADE, related_name='resfinder_data')
     resfinder_gene = models.CharField(max_length=56)
     resfinder_allele = models.IntegerField()
     resfinder_resistance = models.CharField(max_length=64)
@@ -134,5 +144,29 @@ class ResFinderData(models.Model):
     resfinder_location = models.CharField(max_length=64)
     resfinder_sequence = models.CharField(max_length=8192)
     resfinder_aa_identity = models.CharField(max_length=64)  # This is a dash sometimes, so can't have as FloatField :(
-    # TODO: Find out if aa_alignment and other fields are necessary to add.
+
+    history = HistoricalRecords()
+
+
+class CultureData(models.Model):
+    active_choices = (
+        ('YES', 'YES'),
+        ('NO', 'NO')
+    )
+    # Should we allow null values for oln_id - I'm going to say no: forms will create empty OLN models as necessary,
+    # as CultureData should always have an oln_id
+    oln_id = models.ForeignKey(OLN, on_delete=models.CASCADE)
+    received_date = models.DateField()
+    gdna_extraction_date = models.DateField()
+    gdna_extraction_method = models.CharField(max_length=64)
+    gdna_extracted_by = models.CharField(max_length=64)
+    quantification_date = models.DateField()
+    quantification_method = models.CharField(max_length=64)
+    quantified_by = models.CharField(max_length=64)
+    concentration = models.FloatField()
+    discard_date = models.DateField()
+    is_active = models.CharField(max_length=8,
+                                 choices=active_choices,
+                                 default='NO')
+
     history = HistoricalRecords()
