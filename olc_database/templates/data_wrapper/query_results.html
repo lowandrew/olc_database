@@ -1,25 +1,93 @@
 {% extends 'base.html' %}
 {% load staticfiles %}
 {% block content %}
+  <style>
+  /* Style shamelessly taken from W3schools - https://www.w3schools.com/howto/howto_js_tabs.asp */
+   /* Style the tab */
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    /* Style the buttons that are used to open the tab content */
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+    }
+
+    /* Change background color of buttons on hover */
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    /* Create an active/current tablink class */
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    /* Style the tab content */
+    .tabcontent {
+        display: none;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+      .tabcontent {
+        animation: fadeEffect 0.4s;
+    }
+
+    /* Go from zero to full opacity */
+    @keyframes fadeEffect {
+        from {opacity: 0;}
+        to {opacity: 1;}
+    }
+  </style>
   <br>
   <h2>Query Results</h2>
-  <p>Your query returned the following SEQIDs:</p>
-  <table id="seqid-table" class="table table-hover table-bordered compact">
-  <thead>
-    <tr>
-      <td>SEQID</td>
-    </tr>
-  </thead>
-  <tbody>
-    {% for seqid in seqids %}
-      <tr>
-        <td>{{ seqid }}</td>
-      </tr>
-    {% endfor %}
-  </tbody>
-  </table>
   <br>
-  <br>
+  <div class="tab">
+    <button class="tablinks" onclick="openTable(event, 'SEQID')" id="defaultOpen">SEQID Results</button>
+    <button class="tablinks" onclick="openTable(event, 'OLNID')">OLNID Results</button>
+  </div>
+  <div id="SEQID" class="tabcontent">
+      <table id="seqid-table" class="table table-hover table-bordered compact">
+          <thead>
+            <tr>
+              <td>SEQID</td>
+            </tr>
+          </thead>
+          <tbody>
+            {% for seqid in seqids %}
+              <tr>
+                <td>{{ seqid }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+      </table>
+  </div>
+  <div id="OLNID" class="tabcontent">
+      <table id="olnid-table" class="table table-hover table-bordered compact">
+        <thead>
+        <tr>
+          <td>OLNID</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for olnid in olnids %}
+          <tr>
+            <td>{{ olnid }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+  </div>
+  <br><br>
   <h4>View your results in one of your custom tables!</h4>
   <table id="custom-table-table" class="table table-hover table-bordered compact">
   <thead>
@@ -49,7 +117,34 @@
         // I have multiple versions of jQuery present somehow. However, when I don't have jQuery loaded here,
         // I get an error saying that jQuery isn't present when I try to use datatables. Go figure.
         $('#seqid-table').dataTable();
+        $('#olnid-table').dataTable();
         $('#custom-table-table').dataTable();
+        document.getElementById("defaultOpen").click()
       });
+  </script>
+
+  <script type="text/javascript">
+  // According to W3Schools, this will make my tabs work for different query result tables.
+  // https://www.w3schools.com/howto/howto_js_tabs.asp
+  function openTable(evt, cityName) {
+    // Declare all variables
+    var i, tabcontent, tablinks;
+
+    // Get all elements with class="tabcontent" and hide them (except the first - display that)
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+
+    // Get all elements with class="tablinks" and remove the class "active"
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    // Show the current tab, and add an "active" class to the button that opened the tab
+    document.getElementById(cityName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
   </script>
 {% endblock %}

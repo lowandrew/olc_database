@@ -93,7 +93,7 @@ def query_builder(request):
                 attributes.append(search_form.cleaned_data.get('search_attribute'))
                 operations.append(search_form.cleaned_data.get('operation'))
                 combine_operations.append(search_form.cleaned_data.get('combine_choice'))
-            seqids = decipher_input_request(attributes, operations, terms, combine_operations)
+            seqids, olnids = decipher_input_request(attributes, operations, terms, combine_operations)
             if len(seqids) == 1 and 'ERROR' in seqids[0]:
                 return render(request,
                               'data_wrapper/query_builder.html',
@@ -116,6 +116,7 @@ def query_builder(request):
                               'data_wrapper/query_results.html',
                               {
                                   'seqids': seqids,
+                                  'olnids': olnids,
                                   'saved_tables': saved_tables,
                                   'seqid_id': seqid_object.pk
                               })
@@ -549,13 +550,14 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             try:
                 term_as_integer = int(terms[i])
             except ValueError:
+                # This function always needs to return two things - this seems really clumsy.
                 return ['ERROR: When using a GREATER THAN or LESS THAN operation, you must enter a number.'
-                        ' Please try again.']
+                        ' Please try again.'], []
             # Also make sure that field type is valid - can't call greater or less than on a charfield
             if field_type != 'IntegerField' and field_type != 'FloatField':
                 return ['ERROR: Cannot use GREATER THAN operation on {fieldname}, as '
                         '{fieldname} is a {fieldtype}'.format(fieldname=fieldname,
-                                                              fieldtype=field_type)]
+                                                              fieldtype=field_type)], []
             queryset = queryset.filter(**{fieldname + '__gt': term_as_integer})
         elif operations[i] == 'LESS THAN':
             try:
@@ -566,13 +568,13 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             if field_type != 'IntegerField' and field_type != 'FloatField':
                 return ['ERROR: Cannot use LESS THAN operation on {fieldname}, as '
                         '{fieldname} is a {fieldtype}'.format(fieldname=fieldname,
-                                                              fieldtype=field_type)]
+                                                              fieldtype=field_type)], []
             queryset = queryset.filter(**{fieldname + '__lt': term_as_integer})
         elif operations[i] == 'BEFORE':
             if field_type != 'DateField':
                 return ['ERROR: BEFORE and AFTER operations must be used on DateFields. {fieldname} is '
                         ' a {field_type}'.format(fieldname=fieldname,
-                                                 field_type=field_type)]
+                                                 field_type=field_type)], []
             try:
                 queryset = queryset.filter(**{fieldname + '__lt': terms[i]})
             except:
@@ -581,7 +583,7 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             if field_type != 'DateField':
                 return ['ERROR: BEFORE and AFTER operations must be used on DateFields. {fieldname} is '
                         ' a {field_type}'.format(fieldname=fieldname,
-                                                 field_type=field_type)]
+                                                 field_type=field_type)], []
             try:
                 queryset = queryset.filter(**{fieldname + '__gt': terms[i]})
             except:
@@ -628,8 +630,6 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
                 for oln_data in oln_objects:
                     queryset_olnids.append(str(oln_data))
 
-        print(queryset_seqids)
-        print(queryset_olnids)
         # At this point we've filtered based on greaterthan/lessthan/contains for one query. Now need to decide what
         # to do based on whether an and or an or happened.
         # First thing - if this is our last operation, AND vs OR doesn't matter.
@@ -685,14 +685,17 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             olnids.append(new_list)
             oln_samples = OLN.objects.all()
 
-    print(seqids)
-    print(olnids)
-    query_result = list()
+    seqid_result = list()
     for seqid_list in seqids:
         for seqid in seqid_list:
-            if seqid not in query_result:
-                query_result.append(seqid)
-    return query_result
+            if seqid not in seqid_result:
+                seqid_result.append(seqid)
+    olnid_result = list()
+    for olnid_list in olnids:
+        for olnid in olnid_list:
+            if olnid not in olnid_result:
+                olnid_result.append(olnid)
+    return seqid_result, olnid_result
 
 
 def get_model_fields(model):
