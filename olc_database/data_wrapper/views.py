@@ -483,9 +483,13 @@ def upload_seqtracking_csv(request):
 
 
 def get_table_data(table_attributes, seqid_list):
-    """
+    # Need to figure out the best approach to this: Given a list of SEQIDs, will need to know which
+    # OLN and LSTS IDs they're linked to so that we can also retrieve OLN and LSTS-related data for the query.
     table_data = list()
     for seqid in seqid_list:
+        seqdata = SeqData.objects.get(seqid=seqid)
+        oln_id = str(seqdata.oln_id)
+        lsts_id = str(seqdata.lsts_id)
         row_data = list()
         row_data.append(seqid)
         for attribute in table_attributes:
@@ -493,9 +497,22 @@ def get_table_data(table_attributes, seqid_list):
                 if attribute in get_model_fields(m):
                     model = m
                     field = m._meta.get_field(attribute)
+                    break
             fieldname = str(field).split('.')[-1]
-            data = model.objects.filter(seqid=Sample.objects.get(seqid=seqid))
-            a = data.values_list(fieldname, flat=True)
+            # This try/except is super ugly, but seems to work.
+            try:
+                data = model.objects.filter(seqid=SeqData.objects.get(seqid=seqid))
+                a = data.values_list(fieldname, flat=True)
+            except:
+                try:
+                    data = model.objects.filter(oln_id=OLN.objects.get(oln_id=oln_id))
+                    a = data.values_list(fieldname, flat=True)
+                except:
+                    try:
+                        data = model.objects.filter(lsts_id=LSTSData.objects.get(lsts_id=lsts_id))
+                        a = data.values_list(fieldname, flat=True)
+                    except:
+                        a = list()
             # It's possible that some stuff won't be in the database (for example, you can have SeqData uploaded but
             # no corresponding LSTS data) so, need to have this check to cover that case.
             if len(a) == 0:
@@ -513,8 +530,6 @@ def get_table_data(table_attributes, seqid_list):
             row_data.append(data_to_add)
         table_data.append(row_data)
     return table_data
-    """
-    return ['I am not working yet']
 
 
 def decipher_input_request(attributes, operations, terms, combine_operations):
