@@ -54,6 +54,7 @@
   <div class="tab">
     <button class="tablinks" onclick="openTable(event, 'SEQID')" id="defaultOpen">SEQID Results</button>
     <button class="tablinks" onclick="openTable(event, 'OLNID')">OLNID Results</button>
+    <button class="tablinks" onclick="openTable(event, 'LSTSID')">LSTSID Results</button>
   </div>
   <div id="SEQID" class="tabcontent">
       <table id="seqid-table" class="table table-hover table-bordered compact">
@@ -87,6 +88,22 @@
         </tbody>
       </table>
   </div>
+  <div id="LSTSID" class="tabcontent">
+  <table id="lstsid-table" class="table table-hover table-bordered compact">
+    <thead>
+    <tr>
+      <td>LSTSID</td>
+    </tr>
+    </thead>
+    <tbody>
+    {% for lstsid in lstsids %}
+      <tr>
+        <td>{{ lstsid }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
   <br><br>
   <h4>View your results in one of your custom tables!</h4>
   <table id="custom-table-table" class="table table-hover table-bordered compact">
@@ -118,6 +135,7 @@
         // I get an error saying that jQuery isn't present when I try to use datatables. Go figure.
         $('#seqid-table').dataTable();
         $('#olnid-table').dataTable();
+        $('#lstsid-table').dataTable();
         $('#custom-table-table').dataTable();
         document.getElementById("defaultOpen").click()
       });

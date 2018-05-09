@@ -141,7 +141,8 @@ class SeqTracking(models.Model):
 
 
 class ResFinderData(models.Model):
-    seqid = models.OneToOneField(SeqData, on_delete=models.CASCADE, related_name='resfinder_data')
+    # Can have multiple resfinders to one SEQID, so this does have to be ForeignKey, not OneToOne
+    seqid = models.ForeignKey(SeqData, on_delete=models.CASCADE, related_name='resfinder_data')
     resfinder_gene = models.CharField(max_length=56)
     resfinder_allele = models.IntegerField()
     resfinder_resistance = models.CharField(max_length=64)

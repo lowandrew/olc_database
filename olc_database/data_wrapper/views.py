@@ -93,7 +93,7 @@ def query_builder(request):
                 attributes.append(search_form.cleaned_data.get('search_attribute'))
                 operations.append(search_form.cleaned_data.get('operation'))
                 combine_operations.append(search_form.cleaned_data.get('combine_choice'))
-            seqids, olnids = decipher_input_request(attributes, operations, terms, combine_operations)
+            seqids, olnids, lstsids = decipher_input_request(attributes, operations, terms, combine_operations)
             if len(seqids) == 1 and 'ERROR' in seqids[0]:
                 return render(request,
                               'data_wrapper/query_builder.html',
@@ -117,6 +117,7 @@ def query_builder(request):
                               {
                                   'seqids': seqids,
                                   'olnids': olnids,
+                                  'lstsids': lstsids,
                                   'saved_tables': saved_tables,
                                   'seqid_id': seqid_object.pk
                               })
@@ -521,11 +522,9 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
     # I think the I need to keep track of LSTS, OLN, and SeqID, and then have results for each.
     # Will probably display these results in different tabs. This may or may not be not at all how to proceed.
     # Will need to do wome more thinking.
-    seq_samples = SeqData.objects.all()
-    lsts_samples = LSTSData.objects.all()
-    oln_samples = OLN.objects.all()
     seqids = list()
     olnids = list()
+    lstsids = list()
     for i in range(len(attributes)):
         # Step 1: Find which model/field we're pulling stuff from.
         for m in MODELS:
@@ -550,52 +549,51 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             try:
                 term_as_integer = int(terms[i])
             except ValueError:
-                # This function always needs to return two things - this seems really clumsy.
+                # This function always needs to return three things - this seems really clumsy.
                 return ['ERROR: When using a GREATER THAN or LESS THAN operation, you must enter a number.'
-                        ' Please try again.'], []
+                        ' Please try again.'], [], []
             # Also make sure that field type is valid - can't call greater or less than on a charfield
             if field_type != 'IntegerField' and field_type != 'FloatField':
                 return ['ERROR: Cannot use GREATER THAN operation on {fieldname}, as '
                         '{fieldname} is a {fieldtype}'.format(fieldname=fieldname,
-                                                              fieldtype=field_type)], []
+                                                              fieldtype=field_type)], [], []
             queryset = queryset.filter(**{fieldname + '__gt': term_as_integer})
         elif operations[i] == 'LESS THAN':
             try:
                 term_as_integer = int(terms[i])
             except ValueError:
                 return ['ERROR: When using a greater than or less than operation, you must enter a number.'
-                        ' Please try again.']
+                        ' Please try again.'], [], []
             if field_type != 'IntegerField' and field_type != 'FloatField':
                 return ['ERROR: Cannot use LESS THAN operation on {fieldname}, as '
                         '{fieldname} is a {fieldtype}'.format(fieldname=fieldname,
-                                                              fieldtype=field_type)], []
+                                                              fieldtype=field_type)], [], []
             queryset = queryset.filter(**{fieldname + '__lt': term_as_integer})
         elif operations[i] == 'BEFORE':
             if field_type != 'DateField':
                 return ['ERROR: BEFORE and AFTER operations must be used on DateFields. {fieldname} is '
                         ' a {field_type}'.format(fieldname=fieldname,
-                                                 field_type=field_type)], []
+                                                 field_type=field_type)], [], []
             try:
                 queryset = queryset.filter(**{fieldname + '__lt': terms[i]})
             except:
-                return ['ERROR: Date format must be YYYY-MM-DD. Please re-enter your date in that format and try again.']
+                return ['ERROR: Date format must be YYYY-MM-DD. Please re-enter your date in that format and try again.'], [], []
         elif operations[i] == 'AFTER':
             if field_type != 'DateField':
                 return ['ERROR: BEFORE and AFTER operations must be used on DateFields. {fieldname} is '
                         ' a {field_type}'.format(fieldname=fieldname,
-                                                 field_type=field_type)], []
+                                                 field_type=field_type)], [], []
             try:
                 queryset = queryset.filter(**{fieldname + '__gt': terms[i]})
             except:
-                return ['ERROR: Date format must be YYYY-MM-DD. Please re-enter your date in that format and try again.']
+                return ['ERROR: Date format must be YYYY-MM-DD. Please re-enter your date in that format and try again.'], [], []
 
         queryset_seqids = list()
         queryset_olnids = list()
-
-        # TODO: Get LSTS ID searching done when you know OLN and SEQID work.
         queryset_lstsids = list()
-        # Pretty sure I'm not retrieving objects based on ForeignKeys properly here. Will need testing
+
         # First loop through queryset will be for seqids.
+        # TODO: only get model fields once per loop - current implementation is resource wasting
         for item in queryset:
             if 'seqid' in get_model_fields(item):
                 # This only works because I have __str__ methods defined. Make sure new models have them.
@@ -629,6 +627,26 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
                 oln_objects = OLN.objects.filter(lsts_id__lsts_id__exact=str(item))
                 for oln_data in oln_objects:
                     queryset_olnids.append(str(oln_data))
+
+        # Finally, take care of LSTS IDs
+        for item in queryset:
+            if 'lsts_id' in get_model_fields(item) and 'seqid' not in get_model_fields(item) and 'oln_id' not in get_model_fields(item):
+                # This takes care of only the LSTSData itself.
+                queryset_lstsids.append(str(item))
+            elif 'oln_id' in get_model_fields(item) and 'lsts_id' in get_model_fields(item) and 'seqid' not in get_model_fields(item):
+                # Next need to take care of things that have OLN ID and LSTSID but no SEQID - this covers OLN
+                queryset_lstsids.append(str(item.lsts_id))
+            elif 'seqid' in get_model_fields(item) and 'lsts_id' in get_model_fields(item):
+                # This should covers seqdata, which should give us LSTS ID easily
+                queryset_lstsids.append(str(item.lsts_id))
+            elif 'seqid' in get_model_fields(item) and 'lsts_id' not in get_model_fields(item):
+                seqdata = SeqData.objects.get(seqid=str(item))
+                queryset_lstsids.append(str(seqdata.lsts_id))
+            elif 'oln_id' in get_model_fields(item):
+                # Now need to cover CultureData.
+                oln_objects = OLN.objects.filter(oln_id=str(item))
+                for oln_object in oln_objects:
+                    queryset_lstsids.append(str(oln_object.lsts_id))
 
         # At this point we've filtered based on greaterthan/lessthan/contains for one query. Now need to decide what
         # to do based on whether an and or an or happened.
@@ -685,17 +703,50 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             olnids.append(new_list)
             oln_samples = OLN.objects.all()
 
+        # Finally (again) get LSTS ID out.
+        lsts_samples = LSTSData.objects.all()
+        if i == len(combine_operations) - 1:
+            new_list = list()
+            for sample in lsts_samples:
+                if sample.lsts_id not in queryset_lstsids:
+                    lsts_samples = lsts_samples.exclude(lsts_id=sample.lsts_id)
+            for sample in lsts_samples:
+                new_list.append(sample.lsts_id)
+            lstsids.append(new_list)
+        # Next case: AND - just keep going and filter queryset to be used in our next query down further.
+        elif combine_operations[i] == 'AND':
+            for sample in lsts_samples:
+                if sample.lsts_id not in queryset_lstsids:
+                    lsts_samples = lsts_samples.exclude(lsts_id=sample.lsts_id)
+        # Final case: OR - we'll need to generate a list of SEQIDs for this query and then refresh the sample set.
+        elif combine_operations[i] == 'OR':
+            new_list = list()
+            for sample in lsts_samples:
+                if sample.lsts_id not in queryset_lstsids:
+                    lsts_samples = lsts_samples.exclude(lsts_id=sample.lsts_id)
+            for sample in samples:
+                new_list.append(sample.lsts_id)
+            lstsids.append(new_list)
+            lsts_samples = LSTSData.objects.all()
+
     seqid_result = list()
     for seqid_list in seqids:
         for seqid in seqid_list:
             if seqid not in seqid_result:
                 seqid_result.append(seqid)
+
     olnid_result = list()
     for olnid_list in olnids:
         for olnid in olnid_list:
             if olnid not in olnid_result:
                 olnid_result.append(olnid)
-    return seqid_result, olnid_result
+
+    lstsid_result = list()
+    for lstsid_list in lstsids:
+        for lstsid in lstsid_list:
+            if lstsid not in lstsid_result:
+                lstsid_result.append(lstsid)
+    return seqid_result, olnid_result, lstsid_result
 
 
 def get_model_fields(model):
