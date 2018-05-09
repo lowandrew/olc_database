@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from data_wrapper.models import Sample, SeqData, ResFinderData
+from data_wrapper.models import SeqData, ResFinderData
 import os
 import csv
 import pandas as pd
@@ -9,12 +9,6 @@ def read_combined_metadata(data_folder):
     with open(os.path.join(data_folder, 'combinedMetadata.csv')) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            # If sample does not exist in database, add it to DB.
-            try:
-                Sample.objects.get(seqid=row['SeqID'])
-            except:
-                Sample.objects.create(seqid=row['SeqID'])
-
             # Sometimes people forget about the InterOp folder. Without that, phix and error rate can't be calculated.
             # If that happens, set those values to -1
             if row['PercentReadsPhiX'] == 'ND' or row['PercentReadsPhiX'] == '-':
@@ -26,7 +20,7 @@ def read_combined_metadata(data_folder):
             else:
                 error_rate = row['ErrorRate']
             # Now go through and add metadata from the combinedMetadata to our SeqData
-            SeqData.objects.update_or_create(seqid=Sample.objects.get(seqid=row['SeqID']),
+            SeqData.objects.update_or_create(seqid=row['SeqID'],
                                              genus=row['Genus'],
                                              n50=row['N50'],
                                              num_contigs=row['NumContigs'],
@@ -87,17 +81,17 @@ def read_resfinder(data_folder):
     for i in df.index:
         if pd.isnull(df.loc[i]['Strain']):
             continue
-        # Add Sample to database if it doesn't already exist for some
+        # Add SeqData to database if it doesn't already exist for some
         try:
-            Sample.objects.get(seqid=df['Strain'][i])
+            SeqData.objects.get(seqid=df['Strain'][i])
         except:
-            Sample.objects.create(seqid=df['Strain'][i])
+            SeqData.objects.create(seqid=df['Strain'][i])
         # Now add data, yay.
         try:
             float(df['aa_Identity'][i])
         except:
             df['aa_Identity'][i] = 100.0
-        ResFinderData.objects.update_or_create(seqid=Sample.objects.get(seqid=df['Strain'][i]),
+        ResFinderData.objects.update_or_create(seqid=SeqData.objects.get(seqid=df['Strain'][i]),
                                                resfinder_gene=df['Gene'][i],
                                                resfinder_allele=df['Allele'][i],
                                                resfinder_resistance=df['Resistance'][i],

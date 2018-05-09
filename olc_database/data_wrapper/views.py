@@ -14,7 +14,10 @@ from django.contrib import messages
 
 
 # make a list of models that we'll use in table building/query building
-MODELS = [SeqData, LSTSData, ResFinderData, SeqTracking, OLN, CultureData]
+# IMPORTANT! The order of this must remain as is - LSTSData, OLN, and SeqData
+# have to be first (AND IN THAT ORDER), as they're our 'primary(ish)' keys. Otherwise, querying will not work like
+# it should
+MODELS = [LSTSData, OLN, SeqData, ResFinderData, SeqTracking, CultureData]
 
 
 # This view is needed to make autocomplete for table/query builder work.
@@ -478,6 +481,7 @@ def upload_seqtracking_csv(request):
 
 
 def get_table_data(table_attributes, seqid_list):
+    """
     table_data = list()
     for seqid in seqid_list:
         row_data = list()
@@ -507,6 +511,8 @@ def get_table_data(table_attributes, seqid_list):
             row_data.append(data_to_add)
         table_data.append(row_data)
     return table_data
+    """
+    return ['I am not working yet']
 
 
 def decipher_input_request(attributes, operations, terms, combine_operations):
@@ -518,12 +524,14 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
     lsts_samples = LSTSData.objects.all()
     oln_samples = OLN.objects.all()
     seqids = list()
+    olnids = list()
     for i in range(len(attributes)):
         # Step 1: Find which model/field we're pulling stuff from.
         for m in MODELS:
             if attributes[i] in get_model_fields(m):
                 model = m
                 field = model._meta.get_field(attributes[i])
+                break
 
         field_type = field.get_internal_type()
         queryset = model.objects.all()
@@ -603,20 +611,20 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
                 for seqdata in seqdata_objects:
                     queryset_seqids.append(str(seqdata))
 
-        # Now attempt to take care of OLN IDs. # TODO: deal with Null values - Should be easy to deal with
+        # Now attempt to take care of OLN IDs.
         for item in queryset:
-            if 'oln_id' in get_model_fields(item):
+            if 'oln_id' in get_model_fields(item) and 'seqid' not in get_model_fields(item):
                 # This takes care of everything but accessory sequence data (resfinder, confindr, etc) and LSTS.
                 queryset_olnids.append(str(item))
             elif 'seqid' in get_model_fields(item):
                 # First, get the SeqData object, as this deals with accessory sequence data.
                 # Then, need to get the OLN ID associated with the SeqData, if it exists.
-                seqdata_objects = SeqData.objects.get(seqid=item.seqid)
-                for seqdata in seqdata_objects:
+                seqdata = SeqData.objects.get(seqid=item.seqid)
+                if str(seqdata.oln_id) != 'None':  # Don't let null values get through
                     queryset_olnids.append(str(seqdata.oln_id))
             elif 'lsts_id' in get_model_fields(item):
                 # This should only ever be for the LSTSData object - all others are covered under olnid or seqid
-                oln_objects = OLN.objects.filter(lsts_id=item.lsts_id)
+                oln_objects = OLN.objects.filter(lsts_id__lsts_id__exact=str(item))
                 for oln_data in oln_objects:
                     queryset_olnids.append(str(oln_data))
 
@@ -625,6 +633,7 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
         # At this point we've filtered based on greaterthan/lessthan/contains for one query. Now need to decide what
         # to do based on whether an and or an or happened.
         # First thing - if this is our last operation, AND vs OR doesn't matter.
+        samples = SeqData.objects.all()
         if i == len(combine_operations) - 1:
             new_list = list()
             for sample in samples:
@@ -649,6 +658,35 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             seqids.append(new_list)
             samples = SeqData.objects.all()
 
+        # Now do the exact thing that we did for SEQID for OLNID.
+        # TODO: Write a separate function once I know this works, because this is not DRY.
+        oln_samples = OLN.objects.all()
+        if i == len(combine_operations) - 1:
+            new_list = list()
+            for sample in oln_samples:
+                if sample.oln_id not in queryset_olnids:
+                    oln_samples = oln_samples.exclude(oln_id=sample.oln_id)
+            for sample in oln_samples:
+                new_list.append(sample.oln_id)
+            olnids.append(new_list)
+        # Next case: AND - just keep going and filter queryset to be used in our next query down further.
+        elif combine_operations[i] == 'AND':
+            for sample in oln_samples:
+                if sample.oln_id not in queryset_olnids:
+                    oln_samples = oln_samples.exclude(oln_id=sample.oln_id)
+        # Final case: OR - we'll need to generate a list of SEQIDs for this query and then refresh the sample set.
+        elif combine_operations[i] == 'OR':
+            new_list = list()
+            for sample in oln_samples:
+                if sample.oln_id not in queryset_olnids:
+                    oln_samples = oln_samples.exclude(oln_id=sample.oln_id)
+            for sample in samples:
+                new_list.append(sample.oln_id)
+            olnids.append(new_list)
+            oln_samples = OLN.objects.all()
+
+    print(seqids)
+    print(olnids)
     query_result = list()
     for seqid_list in seqids:
         for seqid in seqid_list:
