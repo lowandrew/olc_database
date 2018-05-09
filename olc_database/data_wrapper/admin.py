@@ -1,8 +1,8 @@
 from django.contrib import admin
-from .models import Sample, SeqData, LSTSData, ResFinderData, SavedQueries, SeqTracking
+from .models import SeqData, LSTSData, ResFinderData, SavedQueries, SeqTracking, OLN
 
 # Register your models here.
-admin.site.register(Sample)
+admin.site.register(OLN)
 admin.site.register(SeqData)
 admin.site.register(LSTSData)
 admin.site.register(ResFinderData)

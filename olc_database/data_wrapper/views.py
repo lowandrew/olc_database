@@ -13,6 +13,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
 
+# make a list of models that we'll use in table building/query building
+MODELS = [SeqData, LSTSData, ResFinderData, SeqTracking, OLN, CultureData]
+
+
 # This view is needed to make autocomplete for table/query builder work.
 class AttributeAutocompleteFromList(autocomplete.Select2ListView):
     def get_list(self):
@@ -36,7 +40,7 @@ def table_builder(request):
         if table_formset.is_valid():
             for table_form in table_formset:
                 terms.append(table_form.cleaned_data.get('table_attribute'))
-            seqid_list = list(Sample.objects.values_list('seqid', flat=True))
+            seqid_list = list(SeqData.objects.values_list('seqid', flat=True))
             table_data = get_table_data(table_attributes=terms,
                                         seqid_list=seqid_list)
             if save_query == 'Yes':
@@ -393,25 +397,14 @@ def create_data_seqtracking(request):
         if seqtracking_form.is_valid():
             seqid = seqtracking_form.cleaned_data.get('seqid')
             lsts_id = seqtracking_form.cleaned_data.get('lsts_id')
-            location = seqtracking_form.cleaned_data.get('location')
             oln_id = seqtracking_form.cleaned_data.get('oln_id')
-            project = seqtracking_form.cleaned_data.get('project')
             priority = seqtracking_form.cleaned_data.get('priority')
             curator_flag = seqtracking_form.cleaned_data.get('curator_flag')
             comment = seqtracking_form.cleaned_data.get('comment')
-            sample_exists = Sample.objects.filter(seqid=seqid).exists()
-            lsts_exists = LSTSData.objects.filter(lsts_id=lsts_id).exists()
-            if not sample_exists:
-                Sample.objects.create(seqid=seqid)
-            if not lsts_exists:
-                LSTSData.objects.create(lsts_id=lsts_id,
-                                        seqid=Sample.objects.get(seqid=seqid))
             try:
-                SeqTracking.objects.update_or_create(seqid=Sample.objects.get(seqid=seqid),
+                SeqTracking.objects.update_or_create(seqid=SeqData.objects.get(seqid=seqid),
                                                      lsts_id=LSTSData.objects.get(lsts_id=lsts_id),
-                                                     location=location,
-                                                     oln_id=oln_id,
-                                                     project=project,
+                                                     oln_id=OLN.objects.get(oln_id=oln_id),
                                                      priority=priority,
                                                      curator_flag=curator_flag,
                                                      comment=comment)
@@ -464,8 +457,7 @@ def upload_seqtracking_csv(request):
     if request.method == 'POST':
         form = CsvUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            # Will need to decide what columns and whatnot will need to be in CSV file - this whole process will have
-            # to be refined.
+            # Turns out we get excel files for this, not CSV. Will need to use pandas read_excel.
             csv_file = request.FILES['csv_file']
             reader = csv.DictReader(csv_file.read().decode('utf-8'))
             for row in reader:
@@ -487,12 +479,11 @@ def upload_seqtracking_csv(request):
 
 def get_table_data(table_attributes, seqid_list):
     table_data = list()
-    models = [SeqData, LSTSData, ResFinderData, SeqTracking]
     for seqid in seqid_list:
         row_data = list()
         row_data.append(seqid)
         for attribute in table_attributes:
-            for m in models:
+            for m in MODELS:
                 if attribute in get_model_fields(m):
                     model = m
                     field = m._meta.get_field(attribute)
@@ -520,12 +511,16 @@ def get_table_data(table_attributes, seqid_list):
 
 def decipher_input_request(attributes, operations, terms, combine_operations):
     # NOTE: This may not be a good way to do things at all, but as a proof of concept it seems to work.
-    samples = Sample.objects.all()
-    models = [Sample, SeqData, LSTSData, ResFinderData, SeqTracking]
+    # I think the I need to keep track of LSTS, OLN, and SeqID, and then have results for each.
+    # Will probably display these results in different tabs. This may or may not be not at all how to proceed.
+    # Will need to do wome more thinking.
+    seq_samples = SeqData.objects.all()
+    lsts_samples = LSTSData.objects.all()
+    oln_samples = OLN.objects.all()
     seqids = list()
     for i in range(len(attributes)):
         # Step 1: Find which model/field we're pulling stuff from.
-        for m in models:
+        for m in MODELS:
             if attributes[i] in get_model_fields(m):
                 model = m
                 field = model._meta.get_field(attributes[i])
@@ -583,10 +578,50 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
                 queryset = queryset.filter(**{fieldname + '__gt': terms[i]})
             except:
                 return ['ERROR: Date format must be YYYY-MM-DD. Please re-enter your date in that format and try again.']
-        queryset_seqids = list()
-        for item in queryset:
-            queryset_seqids.append(str(item.seqid))
 
+        queryset_seqids = list()
+        queryset_olnids = list()
+
+        # TODO: Get LSTS ID searching done when you know OLN and SEQID work.
+        queryset_lstsids = list()
+        # Pretty sure I'm not retrieving objects based on ForeignKeys properly here. Will need testing
+        # First loop through queryset will be for seqids.
+        for item in queryset:
+            if 'seqid' in get_model_fields(item):
+                # This only works because I have __str__ methods defined. Make sure new models have them.
+                queryset_seqids.append(str(item))
+            elif 'oln_id' in get_model_fields(item):
+                # Can possibly have more than one SEQID associated with an OLN ID. Use filter to get
+                # any/all SEQIDs associated with the oln_id
+                seqdata_objects = SeqData.objects.filter(oln_id__oln_id__exact=str(item))
+                for seqdata in seqdata_objects:
+                    queryset_seqids.append(str(seqdata))
+            elif 'lsts_id' in get_model_fields(item):
+                # This is essentially the exact same as OLN ID - can have more than one SEQID per LSTS, so
+                # get a list of any/all SEQIDs associated with LSTS ID
+                seqdata_objects = SeqData.objects.filter(lsts_id__lsts_id__exact=str(item))
+                for seqdata in seqdata_objects:
+                    queryset_seqids.append(str(seqdata))
+
+        # Now attempt to take care of OLN IDs. # TODO: deal with Null values - Should be easy to deal with
+        for item in queryset:
+            if 'oln_id' in get_model_fields(item):
+                # This takes care of everything but accessory sequence data (resfinder, confindr, etc) and LSTS.
+                queryset_olnids.append(str(item))
+            elif 'seqid' in get_model_fields(item):
+                # First, get the SeqData object, as this deals with accessory sequence data.
+                # Then, need to get the OLN ID associated with the SeqData, if it exists.
+                seqdata_objects = SeqData.objects.get(seqid=item.seqid)
+                for seqdata in seqdata_objects:
+                    queryset_olnids.append(str(seqdata.oln_id))
+            elif 'lsts_id' in get_model_fields(item):
+                # This should only ever be for the LSTSData object - all others are covered under olnid or seqid
+                oln_objects = OLN.objects.filter(lsts_id=item.lsts_id)
+                for oln_data in oln_objects:
+                    queryset_olnids.append(str(oln_data))
+
+        print(queryset_seqids)
+        print(queryset_olnids)
         # At this point we've filtered based on greaterthan/lessthan/contains for one query. Now need to decide what
         # to do based on whether an and or an or happened.
         # First thing - if this is our last operation, AND vs OR doesn't matter.
@@ -612,7 +647,7 @@ def decipher_input_request(attributes, operations, terms, combine_operations):
             for sample in samples:
                 new_list.append(sample.seqid)
             seqids.append(new_list)
-            samples = Sample.objects.all()
+            samples = SeqData.objects.all()
 
     query_result = list()
     for seqid_list in seqids:
@@ -632,8 +667,7 @@ def get_model_fields(model):
 
 def make_list_of_fields():
     fields = list()  # Would use a set here, but django-autocomplete-light wants a list.
-    models = [Sample, SeqData, LSTSData, ResFinderData, SeqTracking]
-    for model in models:
+    for model in MODELS:
         for field in get_model_fields(model):
             if field not in fields:
                 fields.append(field)

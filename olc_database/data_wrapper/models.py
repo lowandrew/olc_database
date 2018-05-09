@@ -45,7 +45,8 @@ class LSTSData(models.Model):
 
 class OLN(models.Model):
     oln_id = models.CharField(max_length=64)
-    lsts_id = models.OneToOneField(LSTSData, on_delete=models.CASCADE, null=True)
+    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True)
+    extra_lsts_data = models.CharField(max_length=64)
     other_id = models.CharField(max_length=64)
     oln_genus = models.CharField(max_length=64)
     oln_species = models.CharField(max_length=64)
@@ -57,6 +58,9 @@ class OLN(models.Model):
     twoenzyme = models.CharField(max_length=64)
 
     history = HistoricalRecords()
+
+    def __str__(self):
+        return self.oln_id
 
 
 class SeqData(models.Model):
@@ -88,7 +92,7 @@ class SeqData(models.Model):
     mlst_allele_5 = models.CharField(max_length=56)
     mlst_allele_6 = models.CharField(max_length=56)
     mlst_allele_7 = models.CharField(max_length=56)
-    core_genes_present = models.CharField(max_length=128)  # Also might have to be changed.
+    core_genes_present = models.CharField(max_length=128)  # Also might have to be changed to non-char.
     ecoli_serotype = models.CharField(max_length=128)
     sistr_serovar_antigen = models.CharField(max_length=512)
     sistr_serovar_cgmlst = models.CharField(max_length=56)
@@ -117,6 +121,9 @@ class SeqData(models.Model):
     pipeline_version = models.CharField(max_length=64)
     date_assembled = models.DateField()
     history = HistoricalRecords()
+
+    def __str__(self):
+        return self.seqid
 
 
 class SeqTracking(models.Model):
@@ -147,6 +154,9 @@ class ResFinderData(models.Model):
 
     history = HistoricalRecords()
 
+    def __str__(self):
+        return self.seqid.seqid
+
 
 class CultureData(models.Model):
     active_choices = (
@@ -170,3 +180,6 @@ class CultureData(models.Model):
                                  default='NO')
 
     history = HistoricalRecords()
+
+    def __str__(self):
+        return self.oln_id.oln_id
