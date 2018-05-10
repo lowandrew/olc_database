@@ -264,6 +264,8 @@ def rerun_query(request, query_id):
                       'olnids': oln_ids,
                       'saved_tables': saved_tables,
                       'seqid_id': seqid_object.pk,
+                      'olnid_id': olnid_object.pk,
+                      'lstsid_id': lstsid_object.pk
                   })
 
 
@@ -326,18 +328,33 @@ def resfinder_history(request, resfinder_id):
 
 
 @login_required
-def generic_table(request, table_id, seqid_id):
+def generic_table(request, table_id, seqid_id, olnid_id, lstsid_id):
     table_attributes = SavedTables.objects.get(pk=table_id).table_attributes
     seqid_list = SeqIdList.objects.get(pk=seqid_id).seqid_list
+    olnid_list = OlnIdList.objects.get(pk=olnid_id).olnid_list
+    lstsid_list = LstsIdList.objects.get(pk=lstsid_id).lstsid_list
     table_data = get_table_data(table_attributes=table_attributes,
                                 seqid_list=seqid_list)
     table_attributes.insert(0, 'SEQID')
     # Need to also have OLN-based and LSTS-based data added here - will be somewhat tricky.
+    oln_table_attributes = SavedTables.objects.get(pk=table_id).table_attributes
+    oln_table_data = get_table_data_oln(oln_table_attributes,
+                                        olnid_list=olnid_list)
+    oln_table_attributes.insert(0, 'OLNID')
+    # LSTS
+    lsts_table_attributes = SavedTables.objects.get(pk=table_id).table_attributes
+    lsts_table_data = get_table_data_lsts(lsts_table_attributes,
+                                          lstsid_list=lstsid_list)
+    lsts_table_attributes.insert(0, 'LSTSID')
     return render(request,
                   'data_wrapper/generic_table.html',
                   {
                       'table_attributes': table_attributes,
-                      'table_data': table_data
+                      'table_data': table_data,
+                      'oln_table_attributes': oln_table_attributes,
+                      'oln_table_data': oln_table_data,
+                      'lsts_table_attributes': lsts_table_attributes,
+                      'lsts_table_data': lsts_table_data
                   })
 
 
@@ -544,7 +561,124 @@ def get_table_data(table_attributes, seqid_list):
             else:
                 data_to_add = ''
                 for item in a:
-                    data_to_add += item + ','
+                    data_to_add += str(item) + ','
+                data_to_add = data_to_add[:-1]
+            row_data.append(data_to_add)
+        table_data.append(row_data)
+    return table_data
+
+
+# I'm pretty sure this is just different enough from the SEQID case that rewriting that method
+# to be able to handle OLN input is more work that just making this. In any case, this is also not very
+# DRY and should be looked at not too far in the future.
+def get_table_data_oln(table_attributes, olnid_list):
+    table_data = list()
+    for oln_id in olnid_list:
+        olndata = OLN.objects.get(oln_id=oln_id)
+        # Get all SEQIDs associate with olndata.
+        seqdata_objects = SeqData.objects.filter(oln_id=olndata)
+        # Also get lsts data associated with OLN, if it exists. Made possible with __str__ methods in models.py
+        lsts_data = str(olndata.lsts_id)
+        # Setup our row.
+        row_data = list()
+        row_data.append(oln_id)
+        # Now iterate through our attributes.
+        for attribute in table_attributes:
+            for m in MODELS:
+                if attribute in get_model_fields(m):
+                    model = m
+                    field = m._meta.get_field(attribute)
+                    break
+            fieldname = str(field).split('.')[-1]
+            # Now that we've done that, try to extract information using an ugly try/except.
+            try:
+                data = model.objects.filter(oln_id=OLN.objects.get(oln_id=oln_id))
+                a = data.values_list(fieldname, flat=True)
+            except:
+                try:
+                    data = model.objects.filter(lsts_id=LSTSData.objects.get(lsts_id=lsts_data))
+                    a = data.values_list(fieldname, flat=True)
+                except:
+                    try:
+                        a = list()
+                        for seqdata in seqdata_objects:
+                            data = model.objects.filter(seqid=SeqData.objects.get(seqid=seqdata.seqid))
+                            temp_data = data.values_list(fieldname, flat=True)
+                            a.append(temp_data)
+                    except:
+                        a = list()
+
+            # It's possible that some stuff won't be in the database (for example, you can have SeqData uploaded but
+            # no corresponding LSTS data) so, need to have this check to cover that case.
+            if len(a) == 0:
+                data_to_add = 'NA'
+            # Most things should only have one entry - one n50, num_contigs per sample, etc.
+            elif len(a) == 1:
+                data_to_add = a[0]
+            # Some things (i.e. resistance genes can have more than one entry per sample. Output those as a comma
+            # separated string.
+            else:
+                data_to_add = ''
+                for item in a:
+                    data_to_add += str(item) + ','
+                data_to_add = data_to_add[:-1]
+            row_data.append(data_to_add)
+        table_data.append(row_data)
+    return table_data
+
+
+def get_table_data_lsts(table_attributes, lstsid_list):
+    table_data = list()
+    for lsts_id in lstsid_list:
+        lstsdata = LSTSData.objects.get(lsts_id=lsts_id)
+        # Get all SEQIDs and OLNIDs associated with LSTS.
+        seqdata_objects = SeqData.objects.filter(lsts_id=lstsdata)
+        olndata_objects = OLN.objects.filter(lsts_id=lstsdata)
+        # Setup our row.
+        row_data = list()
+        row_data.append(lsts_id)
+        # Now iterate through our attributes.
+        for attribute in table_attributes:
+            for m in MODELS:
+                if attribute in get_model_fields(m):
+                    model = m
+                    field = m._meta.get_field(attribute)
+                    break
+            fieldname = str(field).split('.')[-1]
+            # Now that we've done that, try to extract information using an ugly try/except.
+            try:
+                data = model.objects.filter(lsts_id=LSTSData.objects.get(lsts_id=lstsdata))
+                a = data.values_list(fieldname, flat=True)
+            except:
+                try:
+                    a = list()
+                    for olndata in olndata_objects:
+                        data = model.objects.filter(oln_id=OLN.objects.get(oln_id=olndata.oln_id))
+                        temp_data = data.values_list(fieldname, flat=True)
+                        a.append(temp_data)
+                except:
+                    try:
+                        a = list()
+                        for seqdata in seqdata_objects:
+                            data = model.objects.filter(seqid=SeqData.objects.get(seqid=seqdata.seqid))
+                            temp_data = data.values_list(fieldname, flat=True)
+                            a.append(temp_data)
+                    except:
+                        a = list()
+
+            # It's possible that some stuff won't be in the database (for example, you can have SeqData uploaded but
+            # no corresponding LSTS data) so, need to have this check to cover that case.
+            if len(a) == 0:
+                data_to_add = 'NA'
+            # Most things should only have one entry - one n50, num_contigs per sample, etc.
+            elif len(a) == 1:
+                data_to_add = a[0]
+            # Some things (i.e. resistance genes can have more than one entry per sample. Output those as a comma
+            # separated string.
+            else:
+                data_to_add = ''
+                for item in a:
+                    data_to_add += str(item) + ','
                 data_to_add = data_to_add[:-1]
             row_data.append(data_to_add)
         table_data.append(row_data)
