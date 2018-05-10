@@ -4,7 +4,7 @@ from django_tables2 import RequestConfig
 from django_tables2.columns import TemplateColumn
 from django.shortcuts import render, get_object_or_404, redirect
 from data_wrapper.models import LSTSData, SeqData, ResFinderData, SavedQueries, SavedTables, SeqIdList, SeqTracking, \
-    OLN, CultureData
+    OLN, CultureData, LstsIdList, OlnIdList
 from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm, CustomTableForm, \
     SeqTrackingCreateForm, SeqTrackingEditForm, CsvUploadForm
 from .tables import SeqDataTable, ResFinderDataTable, SeqTrackingTable
@@ -248,18 +248,22 @@ def delete_query(request, query_id):
 @login_required
 def rerun_query(request, query_id):
     query = get_object_or_404(SavedQueries, pk=query_id)
-    seqids = decipher_input_request(attributes=query.search_attributes,
-                                    operations=query.search_operations,
-                                    terms=query.search_terms,
-                                    combine_operations=query.search_combine_operations)
+    seqids, oln_ids, lsts_ids = decipher_input_request(attributes=query.search_attributes,
+                                                       operations=query.search_operations,
+                                                       terms=query.search_terms,
+                                                       combine_operations=query.search_combine_operations)
     seqid_object = SeqIdList.objects.create(seqid_list=seqids)
+    lstsid_object = LstsIdList.objects.create(lstsid_list=lsts_ids)
+    olnid_object = OlnIdList.objects.create(olnid_list=oln_ids)
     saved_tables = SavedTables.objects.filter(user=request.user)
     return render(request,
                   'data_wrapper/query_results.html',
                   {
                       'seqids': seqids,
+                      'lstsids': lsts_ids,
+                      'olnids': oln_ids,
                       'saved_tables': saved_tables,
-                      'seqid_id': seqid_object.pk
+                      'seqid_id': seqid_object.pk,
                   })
 
 
@@ -328,6 +332,7 @@ def generic_table(request, table_id, seqid_id):
     table_data = get_table_data(table_attributes=table_attributes,
                                 seqid_list=seqid_list)
     table_attributes.insert(0, 'SEQID')
+    # Need to also have OLN-based and LSTS-based data added here - will be somewhat tricky.
     return render(request,
                   'data_wrapper/generic_table.html',
                   {
@@ -406,6 +411,20 @@ def create_data_seqtracking(request):
             priority = seqtracking_form.cleaned_data.get('priority')
             curator_flag = seqtracking_form.cleaned_data.get('curator_flag')
             comment = seqtracking_form.cleaned_data.get('comment')
+            seqid_exists = SeqData.objects.filter(seqid=seqid).exists()
+            olnid_exists = OLN.objects.filter(oln_id=oln_id).exists()
+            lstsid_exists = LSTSData.objects.filter(lsts_id=lsts_id).exists()
+            # Create our objects if they don't already exist.
+            if not seqid_exists:
+                SeqData.objects.create(seqid=seqid)
+            if not olnid_exists:
+                OLN.objects.create(oln_id=oln_id)
+            if not lstsid_exists:
+                LSTSData.objects.create(lsts_id=lsts_id)
+
+            # Also update the SeqData to point back to the LSTS/OLN data
+            SeqData.objects.filter(seqid=seqid).update(oln_id=OLN.objects.get(oln_id=oln_id),
+                                                       lsts_id=LSTSData.objects.get(lsts_id=lsts_id))
             try:
                 SeqTracking.objects.update_or_create(seqid=SeqData.objects.get(seqid=seqid),
                                                      lsts_id=LSTSData.objects.get(lsts_id=lsts_id),
