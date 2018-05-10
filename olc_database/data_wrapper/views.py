@@ -112,6 +112,8 @@ def query_builder(request):
                                                 query_name=query_name)
                 saved_tables = SavedTables.objects.filter(user=request.user)
                 seqid_object = SeqIdList.objects.create(seqid_list=seqids)
+                olnid_object = OlnIdList.objects.create(olnid_list=olnids)
+                lstsid_object = LstsIdList.objects.create(lstsid_list=lstsids)
                 return render(request,
                               'data_wrapper/query_results.html',
                               {
@@ -119,7 +121,9 @@ def query_builder(request):
                                   'olnids': olnids,
                                   'lstsids': lstsids,
                                   'saved_tables': saved_tables,
-                                  'seqid_id': seqid_object.pk
+                                  'seqid_id': seqid_object.pk,
+                                  'olnid_id': olnid_object.pk,
+                                  'lstsid_id': lstsid_object.pk,
                               })
         else:
             return render(request,
