@@ -23,20 +23,6 @@ def make_list_of_fields():
     return fields
 
 
-class CsvUploadForm(forms.Form):
-    csv_file = forms.FileField()
-
-    def clean_csv_file(self):
-        # Make sure that the CSV file isn't giant (no way anything should ever be over 10 MB) and
-        # that it actually ends with .csv
-        csv_file = self.cleaned_data['csv_file']
-        if csv_file.size > 10000000:
-            raise forms.ValidationError('Filesize must be less than 10MB.')
-        if not csv_file.name.endswith('.csv'):
-            raise forms.ValidationError('File extension must be .csv')
-        return csv_file
-
-
 class SeqTrackingEditForm(forms.ModelForm):
     class Meta:
         model = SeqTracking
@@ -80,6 +66,28 @@ class SeqTrackingCreateForm(forms.Form):
         if not re.match('\d{4}-[A-Z]+-\d{4}', seqid):
             raise forms.ValidationError('Invalid SEQID format. Correct format is YYYY-LAB-####')
         return seqid
+
+
+class OLNDataCreateForm(forms.Form):
+    oln_id = forms.CharField(max_length=64)
+    lsts_id = forms.CharField(max_length=64, required=False)
+    extra_lsts_data = forms.CharField(max_length=64, required=False)
+    other_id = forms.CharField(max_length=64, required=False)
+    oln_genus = forms.CharField(max_length=64, required=False)
+    oln_species = forms.CharField(max_length=64, required=False)
+    oln_subspecies = forms.CharField(max_length=64, required=False)
+    oln_serotype = forms.CharField(max_length=64, required=False)
+    oln_verotoxin = forms.CharField(max_length=64, required=False)
+    oneenzyme = forms.CharField(max_length=64, required=False)
+    twoenzyme = forms.CharField(max_length=64, required=False)
+
+
+class OLNDataForm(forms.ModelForm):
+    class Meta:
+        model = OLN
+        fields = get_model_fields(OLN)
+
+    change_reason = forms.CharField(max_length=128)
 
 
 class SeqDataForm(forms.ModelForm):

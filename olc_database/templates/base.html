@@ -48,7 +48,15 @@
               <a class="nav-link" href="{% url 'data_wrapper:query_builder' %}">Query Builder<span class="sr-only">(current)</span></a>
             </li>
             <li class="nav-item active">
-              <a class="nav-link" href="{% url 'data_wrapper:seqdata_table' %}">Sequence Data<span class="sr-only">(current)</span></a>
+              <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown">View Data</button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item" href="{% url 'data_wrapper:seqdata_table' %}">Sequence Data</a>
+                  <a class="dropdown-item" href="{% url 'data_wrapper:oln_table' %}">OLN Data</a>
+                  <a class="dropdown-item" href="{% url 'data_wrapper:seqtracking_table' %}">SeqTracking Data</a>
+                  <a class="dropdown-item" href="{% url 'data_wrapper:resfinderdata_table' %}">ResFinder Data</a>
+                </div>
+              </div>
             </li>
             <li class="nav-item active">
               <a class="nav-link" href="{% url 'data_wrapper:saved_queries' %}">Saved Queries<span class="sr-only">(current)</span></a>
@@ -89,14 +97,12 @@
       {% endif %}
 
       {% block content %}
-        <br><br>
-        <a class="btn btn-info" href="{% url 'data_wrapper:seqdata_table' %}">View Sequence Data</a>
+      <br>
+        <h2>OLC Database</h2>
         <br>
-        <br>
-        <a class="btn btn-info" href="{% url 'data_wrapper:resfinderdata_table' %}">View ResFinder Data</a>
-        <br>
-        <br>
-        <a class="btn btn-info" href="{% url 'data_wrapper:seqtracking_table' %}">View SeqTracking Data</a>
+        <p>Welcome to the OLC Database! You can view our data, make custom queries or tables, and add or edit
+        data to the database.</p>
+
 
       {% endblock content %}
 

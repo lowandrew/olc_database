@@ -6,8 +6,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from data_wrapper.models import LSTSData, SeqData, ResFinderData, SavedQueries, SavedTables, SeqIdList, SeqTracking, \
     OLN, CultureData, LstsIdList, OlnIdList
 from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm, CustomTableForm, \
-    SeqTrackingCreateForm, SeqTrackingEditForm, CsvUploadForm
-from .tables import SeqDataTable, ResFinderDataTable, SeqTrackingTable
+    SeqTrackingCreateForm, SeqTrackingEditForm, OLNDataCreateForm, OLNDataForm
+from .tables import SeqDataTable, ResFinderDataTable, SeqTrackingTable, OLNTable
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -193,6 +193,27 @@ def delete_table(request, table_id):
 
 
 @login_required
+def edit_data_oln(request, oln_id):
+    oln_data = get_object_or_404(OLN, pk=oln_id)
+    oln_form = OLNDataForm(instance=oln_data)
+    if request.method == 'POST':
+        oln_form = OLNDataForm(request.POST)
+        if oln_form.is_valid():
+            o = OLNDataForm(request.POST, instance=oln_data)
+            change_reason = oln_form.cleaned_data.get('change_reason')
+            with_reason = o.save(commit=False)
+            with_reason.changeReason = change_reason
+            o.save()
+            return redirect('data_wrapper:oln_table')
+    return render(request,
+                  'data_wrapper/edit_data_oln.html',
+                  {
+                      'oln_form': oln_form
+                  }
+                  )
+
+
+@login_required
 def edit_data_resfinder(request, resfinder_id):
     resfinder_data = get_object_or_404(ResFinderData, pk=resfinder_id)
     resfinder_form = ResFinderDataForm(instance=resfinder_data)
@@ -205,11 +226,10 @@ def edit_data_resfinder(request, resfinder_id):
             with_reason.changeReason = change_reason
             r.save()
             return redirect('data_wrapper:resfinderdata_table')
-    else:
-        return render(request,
-                      'data_wrapper/edit_data_resfinder.html',
-                      {'resfinder_form': resfinder_form},
-                      )
+    return render(request,
+                  'data_wrapper/edit_data_resfinder.html',
+                  {'resfinder_form': resfinder_form},
+                  )
 
 
 @login_required
@@ -296,6 +316,22 @@ def query_details(request, query_id):
                       'query_detail_list': query_detail_list
                   })
 
+
+@login_required
+def oln_history(request, oln_id):
+    olndata = get_object_or_404(OLN, pk=oln_id)
+    histories = olndata.history.all()
+    table = OLNTable(histories,
+                     extra_columns=[('Date Changed', TemplateColumn('{{ record.history_date }}')),
+                                    ('Changed By', TemplateColumn('{{ record.history_user }}')),
+                                    ('Change Reason', TemplateColumn('{{ record.history_change_reason }}'))])
+    return render(request,
+                  'data_wrapper/oln_history.html',
+                  {
+                      'olndata': olndata,
+                      'table': table,
+                  }
+                  )
 
 @login_required
 def seqdata_history(request, seqdata_id):
@@ -421,6 +457,43 @@ def edit_data_seqtracking(request, seqtracking_id):
 
 
 @login_required
+def oln_table(request):
+    table = OLNTable(OLN.objects.all(),
+                     extra_columns=[('Edit', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_oln\' oln_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>')),
+                     ('History', TemplateColumn('<a href="{% url \'data_wrapper:oln_history\' oln_id=record.pk %}" class="btn btn-outline-dark" role="button" aria-pressed="true">View History</a>'))])
+
+    RequestConfig(request, paginate=False).configure(table)
+    return render(request,
+                  'data_wrapper/oln_table.html',
+                  {
+                      'table': table
+                  })
+
+
+@login_required
+def create_data_oln(request):
+    oln_form = OLNDataCreateForm()
+    if request.method == 'POST':
+        oln_form = OLNDataCreateForm(request.POST)
+        if oln_form.is_valid():
+            # TODO: Make this actually do things
+            print('FORM IS VALID')
+            return redirect('data_wrapper:oln_table')
+    return render(request,
+                  'data_wrapper/create_data_oln.html',
+                  {
+                    'oln_form': oln_form,
+                  }
+                  )
+
+
+@login_required
+def create_data_lsts(request):
+    return render(request,
+                  'data_wrapper/create_data_lsts.html')
+
+
+@login_required
 def create_data_seqtracking(request):
     seqtracking_form = SeqTrackingCreateForm()
     if request.method == 'POST':
@@ -494,32 +567,6 @@ def seqtracking_table(request):
                   {
                       'table': table
                   })
-
-
-@login_required
-def upload_seqtracking_csv(request):
-    form = CsvUploadForm()
-    if request.method == 'POST':
-        form = CsvUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            # Turns out we get excel files for this, not CSV. Will need to use pandas read_excel.
-            csv_file = request.FILES['csv_file']
-            reader = csv.DictReader(csv_file.read().decode('utf-8'))
-            for row in reader:
-                print(row)
-            messages.success(request, 'File was uploaded! :D')
-            return redirect('data_wrapper:seqtracking_table')
-        return render(request,
-                      'data_wrapper/upload_seqtracking_csv.html',
-                      {
-                          'form': form
-                      })
-    else:
-        return render(request,
-                      'data_wrapper/upload_seqtracking_csv.html',
-                      {
-                          'form': form
-                      })
 
 
 def get_table_data(table_attributes, seqid_list):
