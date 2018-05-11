@@ -449,11 +449,10 @@ def edit_data_seqtracking(request, seqtracking_id):
             with_reason.changeReason = change_reason
             s.save()
             return redirect('data_wrapper:seqtracking_table')
-    else:
-        return render(request,
-                      'data_wrapper/edit_data_seqtracking.html',
-                      {'seqtracking_form': seqtracking_form},
-                      )
+    return render(request,
+                  'data_wrapper/edit_data_seqtracking.html',
+                  {'seqtracking_form': seqtracking_form},
+                  )
 
 
 @login_required
