@@ -78,16 +78,18 @@ class SeqTrackingCreateForm(forms.Form):
 
 class CultureDataCreateForm(forms.Form):
     # TODO: Change some of these to dropdown options once we know exactly what we want.
-    oln_id = forms.CharField(max_length=64)
-    received_date = forms.DateField(required=False)
-    gdna_extraction_date = forms.DateField(required=False)
+    oln_id = forms.CharField(max_length=64, label='OLN ID')
+    received_date = forms.DateField(required=False, label='Received Date', widget=forms.TextInput(attrs={
+        'class': 'datepicker'
+    }))
+    gdna_extraction_date = forms.DateField(required=False, widget=forms.TextInput(attrs={'class': 'datepicker'}))
     gdna_extraction_method = forms.CharField(max_length=64, required=False)
     gdna_extracted_by = forms.CharField(max_length=64, required=False)
-    quantification_date = forms.DateField(required=False)
+    quantification_date = forms.DateField(required=False, widget=forms.TextInput(attrs={'class': 'datepicker'}))
     quantification_method = forms.CharField(max_length=64, required=False)
     quantified_by = forms.CharField(max_length=64, required=False)
     concentration = forms.FloatField(required=False)
-    discard_date = forms.DateField(required=False)
+    discard_date = forms.DateField(required=False, widget=forms.TextInput(attrs={'class': 'datepicker'}))
     is_active = forms.CharField(max_length=64, required=False)
 
 
@@ -109,6 +111,11 @@ class OLNDataForm(forms.ModelForm):
     class Meta:
         model = OLN
         fields = get_model_fields(OLN)
+        help_texts = {'oln_id': 'The OLN ID. Must not already exist in the OLC Database.',
+                      'lsts_id': 'LSTS ID. Will create a new LSTS entry if it does not already exist.',
+                      'extra_lsts_data': 'Any extra identifiers after LSTS.'}
+        labels = {'oln_id': 'OLN ID',
+                  'lsts_id': 'LSTS ID'}
 
     change_reason = forms.CharField(max_length=128)
 

@@ -56,7 +56,8 @@ class OLN(models.Model):
     lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True)
     extra_lsts_data = models.CharField(max_length=64, null=True, blank=True)
     other_id = models.CharField(max_length=64, null=True, blank=True)
-    oln_genus = models.CharField(max_length=64, null=True, blank=True)
+    oln_genus = models.CharField(max_length=64, null=True, blank=True,
+                                 help_text='Genus!')
     oln_species = models.CharField(max_length=64, null=True, blank=True)
     oln_subspecies = models.CharField(max_length=64, null=True, blank=True)
     oln_serotype = models.CharField(max_length=64, null=True, blank=True)

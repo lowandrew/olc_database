@@ -26,7 +26,7 @@ class AttributeAutocompleteFromList(autocomplete.Select2ListView):
         return make_list_of_fields()
 
 # TODO: Views for table/history/create/editing of data are getting really repetetive - need to think about
-# doing some 
+# doing some
 
 # Create your views here.
 @login_required

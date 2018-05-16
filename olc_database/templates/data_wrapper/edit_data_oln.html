@@ -6,10 +6,20 @@
   <h2>Edit data for OLN</h2>
   <form action="" method="post">
       {% csrf_token %}
-      {{ oln_form.as_p }}
+      {% for field in oln_form %}
+        <p data-toggle="tooltip" title="{{ field.help_text }}">{{ field.label }}: {{ field }}</p>
+      {% endfor %}
+{#      {{ oln_form.as_p }}#}
     <br>
       <button type="submit" class="btn btn-primary">Save Changes</button>
   </form>
   <br>
   <a href="{% url 'data_wrapper:oln_table' %}" class="btn btn-dark" role="button" aria-pressed="true">Return to OLN Table</a>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      $.noConflict();
+      $('[data-toggle="tooltip"]').tooltip();
+    });
+  </script>
 {% endblock %}
