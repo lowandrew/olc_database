@@ -5,8 +5,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from data_wrapper.models import LSTSData, SeqData, ResFinderData, SavedQueries, SavedTables, SeqIdList, SeqTracking, \
     OLN, CultureData, LstsIdList, OlnIdList
 from .forms import SearchForm, BaseSearchFormSet, QuerySaveForm, ResFinderDataForm, SeqDataForm, CustomTableForm, \
-    SeqTrackingCreateForm, SeqTrackingEditForm, OLNDataCreateForm, OLNDataForm
-from .tables import SeqDataTable, ResFinderDataTable, SeqTrackingTable, OLNTable
+    SeqTrackingCreateForm, SeqTrackingEditForm, OLNDataCreateForm, OLNDataForm, CultureDataCreateForm, \
+    CultureDataEditForm
+from .tables import SeqDataTable, ResFinderDataTable, SeqTrackingTable, OLNTable, CultureDataTable
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -24,6 +25,8 @@ class AttributeAutocompleteFromList(autocomplete.Select2ListView):
     def get_list(self):
         return make_list_of_fields()
 
+# TODO: Views for table/history/create/editing of data are getting really repetetive - need to think about
+# doing some 
 
 # Create your views here.
 @login_required
@@ -213,6 +216,26 @@ def edit_data_oln(request, oln_id):
 
 
 @login_required
+def edit_data_culturedata(request, culturedata_id):
+    culturedata = get_object_or_404(CultureData, pk=culturedata_id)
+    form = CultureDataEditForm(instance=culturedata)
+    if request.method == 'POST':
+        form = CultureDataEditForm(request.POST)
+        if form.is_valid():
+            c = CultureDataEditForm(request.POST, instance=culturedata)
+            change_reason = form.cleaned_data.get('change_reason')
+            with_reason = c.save(commit=False)
+            with_reason.changeReason = change_reason
+            c.save()
+            return redirect('data_wrapper:culturedata_table')
+    return render(request,
+                  'data_wrapper/edit_data_culturedata.html',
+                  {
+                      'form': form
+                  })
+
+
+@login_required
 def edit_data_resfinder(request, resfinder_id):
     resfinder_data = get_object_or_404(ResFinderData, pk=resfinder_id)
     resfinder_form = ResFinderDataForm(instance=resfinder_data)
@@ -368,6 +391,23 @@ def resfinder_history(request, resfinder_id):
 
 
 @login_required
+def culturedata_history(request, culturedata_id):
+    culturedata = get_object_or_404(CultureData, pk=culturedata_id)
+    histories = culturedata.history.all()
+    table = CultureDataTable(histories,
+                             extra_columns=[('Date Changed', TemplateColumn('{{ record.history_date }}')),
+                                            ('Changed By', TemplateColumn('{{ record.history_user }}')),
+                                            ('Change Reason', TemplateColumn('{{ record.history_change_reason }}'))])
+    RequestConfig(request).configure(table)
+    return render(request,
+                  'data_wrapper/culturedata_history.html',
+                  {
+                      'culturedata': culturedata,
+                      'table': table,
+                  })
+
+
+@login_required
 def generic_table(request, table_id, seqid_id, olnid_id, lstsid_id):
     table_attributes = SavedTables.objects.get(pk=table_id).table_attributes
     seqid_list = SeqIdList.objects.get(pk=seqid_id).seqid_list
@@ -466,6 +506,62 @@ def oln_table(request):
                   'data_wrapper/oln_table.html',
                   {
                       'table': table
+                  })
+
+
+@login_required
+def culturedata_table(request):
+    table = CultureDataTable(CultureData.objects.all(),
+                     extra_columns=[('Edit', TemplateColumn('<a href="{% url \'data_wrapper:edit_data_culturedata\' culturedata_id=record.pk %}" class="btn btn-primary" role="button" aria-pressed="true">Edit Data</a>')),
+                                    ('History', TemplateColumn('<a href="{% url \'data_wrapper:culturedata_history\' culturedata_id=record.pk %}" class="btn btn-outline-dark" role="button" aria-pressed="true">View History</a>'))])
+
+    RequestConfig(request, paginate=False).configure(table)
+    return render(request,
+                  'data_wrapper/culturedata_table.html',
+                  {
+                      'table': table
+                  })
+
+
+@login_required
+def create_data_culturedata(request):
+    form = CultureDataCreateForm()
+    if request.method == 'POST':
+        form = CultureDataCreateForm(request.POST)
+        if form.is_valid():
+            oln_id = form.cleaned_data.get('oln_id')
+            received_date = form.cleaned_data.get('received_date')
+            gdna_extraction_date = form.cleaned_data.get('gdna_extraction_date')
+            gdna_extraction_method = form.cleaned_data.get('gdna_extraction_method')
+            gdna_extracted_by = form.cleaned_data.get('gdna_extracted_by')
+            quantification_date = form.cleaned_data.get('quantification_date')
+            quantified_by = form.cleaned_data.get('quantified_by')
+            quantification_method = form.cleaned_data.get('quantification_method')
+            concentration = form.cleaned_data.get('concentration')
+            discard_date = form.cleaned_data.get('discard_date')
+            is_active = form.cleaned_data.get('is_active')
+
+            # Need to make an OLN instance if one doesn't already exist
+            if not OLN.objects.filter(oln_id=oln_id).exists():
+                OLN.objects.create(oln_id=oln_id)
+            oln_object = OLN.objects.get(oln_id=oln_id)
+            # Once we're sure we actually have an OLN object available, make our culture data
+            CultureData.objects.create(oln_id=oln_object,
+                                       received_date=received_date,
+                                       gdna_extracted_by=gdna_extracted_by,
+                                       gdna_extraction_date=gdna_extraction_date,
+                                       gdna_extraction_method=gdna_extraction_method,
+                                       quantification_date=quantification_date,
+                                       quantified_by=quantified_by,
+                                       quantification_method=quantification_method,
+                                       concentration=concentration,
+                                       discard_date=discard_date,
+                                       is_active=is_active)
+            return redirect('data_wrapper:culturedata_table')
+    return render(request,
+                  'data_wrapper/create_data_culturedata.html',
+                  {
+                      'form': form
                   })
 
 

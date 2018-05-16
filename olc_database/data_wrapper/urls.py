@@ -21,12 +21,14 @@ urlpatterns = [
     url(r'^oln_table$', views.oln_table, name='oln_table'),
     url(r'^seqtracking_table$', views.seqtracking_table, name='seqtracking_table'),
     url(r'^resfinderdata_table$', views.resfinderdata_table, name='resfinderdata_table'),
+    url(r'^culturedata_table$', views.culturedata_table, name='culturedata_table'),
 
     # Data table editing - SeqData, ResFinder, OLN, LSTS, etc.
     url(r'^edit_data_resfinder/(?P<resfinder_id>\d+)/$', views.edit_data_resfinder, name='edit_data_resfinder'),
     url(r'^edit_data_oln/(?P<oln_id>\d+)/$', views.edit_data_oln, name='edit_data_oln'),
     url(r'^edit_data_seqtracking/(?P<seqtracking_id>\d+)/$', views.edit_data_seqtracking, name='edit_data_seqtracking'),
     url(r'^edit_data_seqdata/(?P<seqdata_id>\d+)/$', views.edit_data_seqdata, name='edit_data_seqdata'),
+    url(r'^edit_data_culturedata/(?P<culturedata_id>\d+)/$', views.edit_data_culturedata, name='edit_data_culturedata'),
 
 
     # Data  table histories - for all the usual suspects.
@@ -34,11 +36,13 @@ urlpatterns = [
     url(r'^seqdata_history/(?P<seqdata_id>\d+)/$', views.seqdata_history, name='seqdata_history'),
     url(r'^resfinder_history/(?P<resfinder_id>\d+)/$', views.resfinder_history, name='resfinder_history'),
     url(r'^oln_history/(?P<oln_id>\d+)/$', views.oln_history, name='oln_history'),
+    url(r'^culturedata_history/(?P<culturedata_id>\d+)/$', views.culturedata_history, name='culturedata_history'),
 
     # Data creation - SeqTracking, OLN, and more!
     url(r'^create_data_seqtracking$', views.create_data_seqtracking, name='create_data_seqtracking'),
     url(r'^create_data_oln$', views.create_data_oln, name='create_data_oln'),
     url(r'^create_data_lsts$', views.create_data_lsts, name='create_data_lsts'),
+    url(r'^create_data_culturedata$', views.create_data_culturedata, name='create_data_culturedata'),
 
     # Saved queries
     url(r'^saved_queries$', views.saved_queries, name='saved_queries'),

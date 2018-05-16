@@ -31,6 +31,14 @@ class SeqTrackingEditForm(forms.ModelForm):
     change_reason = forms.CharField(max_length=128)
 
 
+class CultureDataEditForm(forms.ModelForm):
+    class Meta:
+        model = CultureData
+        fields = get_model_fields(CultureData)
+
+    change_reason = forms.CharField(max_length=128)
+
+
 class ResFinderDataForm(forms.ModelForm):
     class Meta:
         model = ResFinderData
@@ -66,6 +74,21 @@ class SeqTrackingCreateForm(forms.Form):
         if not re.match('\d{4}-[A-Z]+-\d{4}', seqid):
             raise forms.ValidationError('Invalid SEQID format. Correct format is YYYY-LAB-####')
         return seqid
+
+
+class CultureDataCreateForm(forms.Form):
+    # TODO: Change some of these to dropdown options once we know exactly what we want.
+    oln_id = forms.CharField(max_length=64)
+    received_date = forms.DateField(required=False)
+    gdna_extraction_date = forms.DateField(required=False)
+    gdna_extraction_method = forms.CharField(max_length=64, required=False)
+    gdna_extracted_by = forms.CharField(max_length=64, required=False)
+    quantification_date = forms.DateField(required=False)
+    quantification_method = forms.CharField(max_length=64, required=False)
+    quantified_by = forms.CharField(max_length=64, required=False)
+    concentration = forms.FloatField(required=False)
+    discard_date = forms.DateField(required=False)
+    is_active = forms.CharField(max_length=64, required=False)
 
 
 class OLNDataCreateForm(forms.Form):
