@@ -5,6 +5,8 @@
   <br>
   <h2>OLN Data</h2>
   {% render_table table %}
+  <br>
+  <a href="{% url 'data_wrapper:create_data_oln' %}" class="btn btn-success btn-block" role="button" aria-pressed="true">Add OLN Data</a>
   <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
   <script type="text/javascript" src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.4/css/jquery.dataTables.min.css">

@@ -1,4 +1,3 @@
-import csv
 from dal import autocomplete
 from django_tables2 import RequestConfig
 from django_tables2.columns import TemplateColumn
@@ -333,6 +332,7 @@ def oln_history(request, oln_id):
                   }
                   )
 
+
 @login_required
 def seqdata_history(request, seqdata_id):
     seqdata = get_object_or_404(SeqData, pk=seqdata_id)
@@ -475,9 +475,55 @@ def create_data_oln(request):
     if request.method == 'POST':
         oln_form = OLNDataCreateForm(request.POST)
         if oln_form.is_valid():
-            # TODO: Make this actually do things
-            print('FORM IS VALID')
+            oln_id = oln_form.cleaned_data.get('oln_id')
+            lsts_id = oln_form.cleaned_data.get('lsts_id')
+            extra_lsts_data = oln_form.cleaned_data.get('extra_lsts_data')
+            other_id = oln_form.cleaned_data.get('other_id')
+            oln_genus = oln_form.cleaned_data.get('oln_genus')
+            oln_species = oln_form.cleaned_data.get('oln_species')
+            oln_subspecies = oln_form.cleaned_data.get('oln_subspecies')
+            oln_serotype = oln_form.cleaned_data.get('oln_serotype')
+            oln_verotoxin = oln_form.cleaned_data.get('oln_verotoxin')
+            oneenzyme = oln_form.cleaned_data.get('oneenzyme')
+            twoenzyme = oln_form.cleaned_data.get('twoenzyme')
+
+            # If specified OLN object already exists, don't create another one - boot the user with error
+            if OLN.objects.filter(oln_id=oln_id).exists():
+                messages.error(request, 'ERROR: Specified OLN ID ({}) already exists, so a new entry may not be created'
+                               ' for it.'.format(oln_id))
+                return redirect('data_wrapper:oln_table')
+
+            # Create an LSTSData object if one doesn't exist already (unless LSTS is left blank).
+            if not LSTSData.objects.filter(lsts_id=lsts_id).exists() and lsts_id != '':
+                LSTSData.objects.create(lsts_id=lsts_id)
+
+            if lsts_id != '':
+                lsts_object = LSTSData.objects.get(lsts_id=lsts_id)
+                # Create OLN object without LSTS if none specified.
+                OLN.objects.create(oln_id=oln_id,
+                                   lsts_id=lsts_object,
+                                   extra_lsts_data=extra_lsts_data,
+                                   other_id=other_id,
+                                   oln_genus=oln_genus,
+                                   oln_species=oln_species,
+                                   oln_subspecies=oln_subspecies,
+                                   oln_serotype=oln_serotype,
+                                   oln_verotoxin=oln_verotoxin,
+                                   oneenzyme=oneenzyme,
+                                   twoenzyme=twoenzyme)
+            else:
+                OLN.objects.create(oln_id=oln_id,
+                                   extra_lsts_data=extra_lsts_data,
+                                   other_id=other_id,
+                                   oln_genus=oln_genus,
+                                   oln_species=oln_species,
+                                   oln_subspecies=oln_subspecies,
+                                   oln_serotype=oln_serotype,
+                                   oln_verotoxin=oln_verotoxin,
+                                   oneenzyme=oneenzyme,
+                                   twoenzyme=twoenzyme)
             return redirect('data_wrapper:oln_table')
+
     return render(request,
                   'data_wrapper/create_data_oln.html',
                   {
