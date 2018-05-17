@@ -57,14 +57,20 @@ class OLN(models.Model):
     extra_lsts_data = models.CharField(max_length=64, null=True, blank=True)
     other_id = models.CharField(max_length=64, null=True, blank=True)
     oln_genus = models.CharField(max_length=64, null=True, blank=True,
-                                 help_text='Genus!')
-    oln_species = models.CharField(max_length=64, null=True, blank=True)
+                                 help_text='Genus, according to OLN report.')
+    oln_species = models.CharField(max_length=64, null=True, blank=True,
+                                   help_text='Species, according to OLN report.')
     oln_subspecies = models.CharField(max_length=64, null=True, blank=True)
-    oln_serotype = models.CharField(max_length=64, null=True, blank=True)
-    oln_verotoxin = models.CharField(max_length=64, null=True, blank=True)
-    oln_source = models.CharField(max_length=64, null=True, blank=True)
-    oneenzyme = models.CharField(max_length=64, null=True, blank=True)
-    twoenzyme = models.CharField(max_length=64, null=True, blank=True)
+    oln_serotype = models.CharField(max_length=64, null=True, blank=True,
+                                    help_text='Serotype. Applicable for Salmonella and Escherichia, leave blank for others.')
+    oln_verotoxin = models.CharField(max_length=64, null=True, blank=True,
+                                     help_text='Verotoxin, if sample is Escherichia. Leave blank if not Escherichia.')
+    oln_source = models.CharField(max_length=64, null=True, blank=True,
+                                  help_text='Source of food - more specific is better! (i.e. "beef" is better than "meat")')
+    oneenzyme = models.CharField(max_length=64, null=True, blank=True,
+                                 help_text='1\' Enzyme from PFGE.')
+    twoenzyme = models.CharField(max_length=64, null=True, blank=True,
+                                 help_text='2\' Enzyme from PFGE.')
 
     history = HistoricalRecords()
 
@@ -76,7 +82,8 @@ class SeqData(models.Model):
     seqid = models.CharField(max_length=64, null=True, blank=True)
     lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True)
     oln_id = models.ForeignKey(OLN, on_delete=models.CASCADE, null=True)
-    genus = models.CharField(max_length=128, null=True, blank=True)
+    genus = models.CharField(max_length=128, null=True, blank=True,
+                             help_text='Genus, as determined by the COWBAT pipeline.')
     n50 = models.IntegerField(null=True, blank=True)
     num_contigs = models.IntegerField(null=True, blank=True)
     rmlst = models.CharField(max_length=56, null=True, blank=True)

@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from data_wrapper.models import SeqData, ResFinderData, OLN, LSTSData
+from dateutil import parser
 import os
 import csv
 import pandas as pd
@@ -20,6 +21,12 @@ def read_combined_metadata(data_folder):
                 error_rate = -1.0
             else:
                 error_rate = row['ErrorRate']
+            # Use dateutil to standardize date formats!
+            sequencing_date = parser.parse(row['SequencingDate']).strftime('%Y-%m-%d')
+            assembly_date = parser.parse(row['AssemblyDate']).strftime('%Y-%m-%d')
+            # TODO: Add a check so that floatFields/IntegerFields (n50, insertsize, etc) get converted to 0
+            # if they have a value of ND.
+
             # Now go through and add metadata from the combinedMetadata to our SeqData
             # Figure out if Sample has OLN number, LSTS number or something else entirely.
             if row['SampleName'].startswith('OLC') or row['SampleName'].startswith('OLN') or row['SampleName'].startswith('OLF'):
@@ -34,7 +41,7 @@ def read_combined_metadata(data_folder):
                                                  n50=row['N50'],
                                                  num_contigs=row['NumContigs'],
                                                  rmlst=row['rMLST_Result'],
-                                                 sequencing_date=row['SequencingDate'],
+                                                 sequencing_date=sequencing_date,
                                                  analyst=row['Analyst'],
                                                  sample_purity=row['SamplePurity'],
                                                  assembly_quality=row['AssemblyQuality'],
@@ -81,7 +88,7 @@ def read_combined_metadata(data_folder):
                                                  flowcell=row['Flowcell'],
                                                  machine_name=row['MachineName'],
                                                  pipeline_version=row['PipelineVersion'],
-                                                 date_assembled=row['AssemblyDate']
+                                                 date_assembled=assembly_date
                                                  )
             # Add to LSTS Data if we get a regex match on SampleName
             elif re.match('[A-Z]{3,}-[A-Z]+-\d{4}-[A-Z]+-\d{4,5}', row['SampleName']):
@@ -95,7 +102,7 @@ def read_combined_metadata(data_folder):
                                                  n50=row['N50'],
                                                  num_contigs=row['NumContigs'],
                                                  rmlst=row['rMLST_Result'],
-                                                 sequencing_date=row['SequencingDate'],
+                                                 sequencing_date=sequencing_date,
                                                  analyst=row['Analyst'],
                                                  sample_purity=row['SamplePurity'],
                                                  assembly_quality=row['AssemblyQuality'],
@@ -142,7 +149,7 @@ def read_combined_metadata(data_folder):
                                                  flowcell=row['Flowcell'],
                                                  machine_name=row['MachineName'],
                                                  pipeline_version=row['PipelineVersion'],
-                                                 date_assembled=row['AssemblyDate']
+                                                 date_assembled=assembly_date
                                                  )
             else:
                 SeqData.objects.update_or_create(seqid=row['SeqID'],
@@ -150,7 +157,7 @@ def read_combined_metadata(data_folder):
                                                  n50=row['N50'],
                                                  num_contigs=row['NumContigs'],
                                                  rmlst=row['rMLST_Result'],
-                                                 sequencing_date=row['SequencingDate'],
+                                                 sequencing_date=sequencing_date,
                                                  analyst=row['Analyst'],
                                                  sample_purity=row['SamplePurity'],
                                                  assembly_quality=row['AssemblyQuality'],
@@ -197,7 +204,7 @@ def read_combined_metadata(data_folder):
                                                  flowcell=row['Flowcell'],
                                                  machine_name=row['MachineName'],
                                                  pipeline_version=row['PipelineVersion'],
-                                                 date_assembled=row['AssemblyDate']
+                                                 date_assembled=assembly_date
                                                  )
 
 

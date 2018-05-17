@@ -111,11 +111,6 @@ class OLNDataForm(forms.ModelForm):
     class Meta:
         model = OLN
         fields = get_model_fields(OLN)
-        help_texts = {'oln_id': 'The OLN ID. Must not already exist in the OLC Database.',
-                      'lsts_id': 'LSTS ID. Will create a new LSTS entry if it does not already exist.',
-                      'extra_lsts_data': 'Any extra identifiers after LSTS.'}
-        labels = {'oln_id': 'OLN ID',
-                  'lsts_id': 'LSTS ID'}
 
     change_reason = forms.CharField(max_length=128)
 
