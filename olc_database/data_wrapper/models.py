@@ -42,7 +42,7 @@ class SavedTables(models.Model):
 
 # This is pretty much a placeholder model - to be updated once imports of data from LSTS get wholly figured out.
 class LSTSData(models.Model):
-    lsts_id = models.CharField(max_length=88)
+    lsts_id = models.CharField(max_length=88, primary_key=True, unique=True, default='')
     country_of_origin = models.CharField(max_length=128, null=True, blank=True)
     food = models.CharField(max_length=128, null=True, blank=True)
     history = HistoricalRecords()
@@ -52,7 +52,7 @@ class LSTSData(models.Model):
 
 
 class OLN(models.Model):
-    oln_id = models.CharField(max_length=64, null=True, blank=True)
+    oln_id = models.CharField(max_length=64, blank=True, primary_key=True, unique=True, default='')
     lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True)
     extra_lsts_data = models.CharField(max_length=64, null=True, blank=True)
     other_id = models.CharField(max_length=64, null=True, blank=True)
@@ -79,7 +79,7 @@ class OLN(models.Model):
 
 
 class SeqData(models.Model):
-    seqid = models.CharField(max_length=64, null=True, blank=True)
+    seqid = models.CharField(max_length=64, blank=True, primary_key=True, unique=True, default='')
     lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True)
     oln_id = models.ForeignKey(OLN, on_delete=models.CASCADE, null=True)
     genus = models.CharField(max_length=128, null=True, blank=True,

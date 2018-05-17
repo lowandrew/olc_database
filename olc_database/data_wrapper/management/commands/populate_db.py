@@ -24,9 +24,14 @@ def read_combined_metadata(data_folder):
             # Use dateutil to standardize date formats!
             sequencing_date = parser.parse(row['SequencingDate']).strftime('%Y-%m-%d')
             assembly_date = parser.parse(row['AssemblyDate']).strftime('%Y-%m-%d')
-            # TODO: Add a check so that floatFields/IntegerFields (n50, insertsize, etc) get converted to 0
-            # if they have a value of ND.
 
+            # Also change floatFields/IntegerFields (n50, insertsize, etc) get converted to -1 (indicating not there at all)
+            # if they have a value of ND because they couldn't be computed for some reason
+            fields_to_check = ['N50', 'NumContigs', 'TotalLength', 'MeanInsertSize', 'InsertSizeSTD',
+                               'AverageCoverageDepth', 'CoverageDepthSTD', 'PercentGC']
+            for field in fields_to_check:
+                if row[field] == 'ND':
+                    row[field] = -1
             # Now go through and add metadata from the combinedMetadata to our SeqData
             # Figure out if Sample has OLN number, LSTS number or something else entirely.
             if row['SampleName'].startswith('OLC') or row['SampleName'].startswith('OLN') or row['SampleName'].startswith('OLF'):

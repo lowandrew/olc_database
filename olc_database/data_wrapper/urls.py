@@ -25,17 +25,17 @@ urlpatterns = [
 
     # Data table editing - SeqData, ResFinder, OLN, LSTS, etc.
     url(r'^edit_data_resfinder/(?P<resfinder_id>\d+)/$', views.edit_data_resfinder, name='edit_data_resfinder'),
-    url(r'^edit_data_oln/(?P<oln_id>\d+)/$', views.edit_data_oln, name='edit_data_oln'),
+    url(r'^edit_data_oln/(?P<oln_id>\w+)/$', views.edit_data_oln, name='edit_data_oln'),
     url(r'^edit_data_seqtracking/(?P<seqtracking_id>\d+)/$', views.edit_data_seqtracking, name='edit_data_seqtracking'),
-    url(r'^edit_data_seqdata/(?P<seqdata_id>\d+)/$', views.edit_data_seqdata, name='edit_data_seqdata'),
+    url(r'^edit_data_seqdata/(?P<seqdata_id>\d+-\w+-\d+)/$', views.edit_data_seqdata, name='edit_data_seqdata'),
     url(r'^edit_data_culturedata/(?P<culturedata_id>\d+)/$', views.edit_data_culturedata, name='edit_data_culturedata'),
 
 
     # Data  table histories - for all the usual suspects.
     url(r'^seqtracking_history/(?P<seqtracking_id>\d+)/$', views.seqtracking_history, name='seqtracking_history'),
-    url(r'^seqdata_history/(?P<seqdata_id>\d+)/$', views.seqdata_history, name='seqdata_history'),
+    url(r'^seqdata_history/(?P<seqdata_id>\d+-\w+-\d+)/$', views.seqdata_history, name='seqdata_history'),
     url(r'^resfinder_history/(?P<resfinder_id>\d+)/$', views.resfinder_history, name='resfinder_history'),
-    url(r'^oln_history/(?P<oln_id>\d+)/$', views.oln_history, name='oln_history'),
+    url(r'^oln_history/(?P<oln_id>\w+)/$', views.oln_history, name='oln_history'),
     url(r'^culturedata_history/(?P<culturedata_id>\d+)/$', views.culturedata_history, name='culturedata_history'),
 
     # Data creation - SeqTracking, OLN, and more!
