@@ -53,7 +53,7 @@ class LSTSData(models.Model):
 
 class OLN(models.Model):
     oln_id = models.CharField(max_length=64, blank=True, primary_key=True, unique=True, default='')
-    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True)
+    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True, blank=True)
     extra_lsts_data = models.CharField(max_length=64, null=True, blank=True)
     other_id = models.CharField(max_length=64, null=True, blank=True)
     oln_genus = models.CharField(max_length=64, null=True, blank=True,
@@ -80,8 +80,8 @@ class OLN(models.Model):
 
 class SeqData(models.Model):
     seqid = models.CharField(max_length=64, blank=True, primary_key=True, unique=True, default='')
-    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True)
-    oln_id = models.ForeignKey(OLN, on_delete=models.CASCADE, null=True)
+    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True, blank=True)
+    oln_id = models.ForeignKey(OLN, on_delete=models.CASCADE, null=True, blank=True)
     genus = models.CharField(max_length=128, null=True, blank=True,
                              help_text='Genus, as determined by the COWBAT pipeline.')
     n50 = models.IntegerField(null=True, blank=True)
