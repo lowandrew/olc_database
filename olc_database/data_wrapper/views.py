@@ -199,13 +199,12 @@ def edit_data_oln(request, oln_id):
     oln_data = get_object_or_404(OLN, pk=oln_id)
     oln_form = OLNDataForm(instance=oln_data)
     if request.method == 'POST':
-        oln_form = OLNDataForm(request.POST)
+        oln_form = OLNDataForm(request.POST, instance=oln_data)
         if oln_form.is_valid():
-            o = OLNDataForm(request.POST, instance=oln_data)
             change_reason = oln_form.cleaned_data.get('change_reason')
-            with_reason = o.save(commit=False)
+            with_reason = oln_form.save(commit=False)
             with_reason.changeReason = change_reason
-            o.save()
+            oln_form.save()
             return redirect('data_wrapper:oln_table')
     return render(request,
                   'data_wrapper/edit_data_oln.html',
@@ -220,13 +219,12 @@ def edit_data_culturedata(request, culturedata_id):
     culturedata = get_object_or_404(CultureData, pk=culturedata_id)
     form = CultureDataEditForm(instance=culturedata)
     if request.method == 'POST':
-        form = CultureDataEditForm(request.POST)
+        form = CultureDataEditForm(request.POST, instance=culturedata)
         if form.is_valid():
-            c = CultureDataEditForm(request.POST, instance=culturedata)
             change_reason = form.cleaned_data.get('change_reason')
-            with_reason = c.save(commit=False)
+            with_reason = form.save(commit=False)
             with_reason.changeReason = change_reason
-            c.save()
+            form.save()
             return redirect('data_wrapper:culturedata_table')
     return render(request,
                   'data_wrapper/edit_data_culturedata.html',
@@ -240,13 +238,12 @@ def edit_data_resfinder(request, resfinder_id):
     resfinder_data = get_object_or_404(ResFinderData, pk=resfinder_id)
     resfinder_form = ResFinderDataForm(instance=resfinder_data)
     if request.method == 'POST':
-        resfinder_form = ResFinderDataForm(request.POST)
+        resfinder_form = ResFinderDataForm(request.POST, instance=resfinder_data)
         if resfinder_form.is_valid():
-            r = ResFinderDataForm(request.POST, instance=resfinder_data)
             change_reason = resfinder_form.cleaned_data.get('change_reason')
-            with_reason = r.save(commit=False)
+            with_reason = resfinder_form.save(commit=False)
             with_reason.changeReason = change_reason
-            r.save()
+            resfinder_form.save()
             return redirect('data_wrapper:resfinderdata_table')
     return render(request,
                   'data_wrapper/edit_data_resfinder.html',
@@ -259,15 +256,14 @@ def edit_data_seqdata(request, seqdata_id):
     seqdata = get_object_or_404(SeqData, pk=seqdata_id)
     seqdata_form = SeqDataForm(instance=seqdata)
     if request.method == 'POST':
-        seqdata_form = SeqDataForm(request.POST)
+        seqdata_form = SeqDataForm(request.POST, instance=seqdata)
         if seqdata_form.is_valid():
             # Have to do some fancy footwork here to make the change reason save with the other form data.
             # Not entirely sure how this works, but it does, so I won't complain.
-            s = SeqDataForm(request.POST, instance=seqdata)
             change_reason = seqdata_form.cleaned_data.get('change_reason')
-            with_reason = s.save(commit=False)
+            with_reason = seqdata_form.save(commit=False)
             with_reason.changeReason = change_reason
-            s.save()
+            seqdata_form.save()
             return redirect('data_wrapper:seqdata_table')
         else:
             return render(request,
