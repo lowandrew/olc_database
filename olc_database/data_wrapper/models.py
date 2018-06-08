@@ -53,7 +53,9 @@ class LSTSData(models.Model):
 
 class OLN(models.Model):
     oln_id = models.CharField(max_length=64, blank=True, primary_key=True, unique=True, default='')
-    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True, blank=True)
+    lsts_id = models.ForeignKey(LSTSData, on_delete=models.CASCADE, null=True, blank=True,
+                                help_text='LSTS ID associated with this OLN ID. Leave blank if this'
+                                          'OLN ID is not associated with any LSTS ID.')
     extra_lsts_data = models.CharField(max_length=64, null=True, blank=True)
     other_id = models.CharField(max_length=64, null=True, blank=True)
     oln_genus = models.CharField(max_length=64, null=True, blank=True,
@@ -184,17 +186,24 @@ class CultureData(models.Model):
     # as CultureData should always have an oln_id
     oln_id = models.ForeignKey(OLN, on_delete=models.CASCADE)
     received_date = models.DateField(null=True, blank=True)
-    gdna_extraction_date = models.DateField(null=True, blank=True)
-    gdna_extraction_method = models.CharField(max_length=64, null=True, blank=True)
-    gdna_extracted_by = models.CharField(max_length=64, null=True, blank=True)
-    quantification_date = models.DateField(null=True, blank=True)
+    gdna_extraction_date = models.DateField(null=True, blank=True,
+                                            help_text='Date that Genomic DNA was extracted. Must be in YYYY-MM-DD format.')
+    gdna_extraction_method = models.CharField(max_length=64, null=True, blank=True,
+                                              help_text='Method used to extract DNA - choices are: INSERT LIST HERE')
+    gdna_extracted_by = models.CharField(max_length=64, null=True, blank=True,
+                                         help_text='Name of person that extracted DNA. Enter in First Name Last Name'
+                                                   ' format.')
+    quantification_date = models.DateField(null=True, blank=True,
+                                           help_text='Date that DNA was quantified. Must be in YYYY-MM-DD format.')
     quantification_method = models.CharField(max_length=64, null=True, blank=True)
     quantified_by = models.CharField(max_length=64, null=True, blank=True)
     concentration = models.FloatField(null=True, blank=True)
     discard_date = models.DateField(null=True, blank=True)
     is_active = models.CharField(max_length=8,
                                  choices=active_choices,
-                                 default='NO')
+                                 default='NO',
+                                 help_text='If culture is actively being plated, set this to YES.'
+                                           ' Otherwise, set to NO.')
 
     history = HistoricalRecords()
 
