@@ -6,6 +6,7 @@
   <h2>Sample Sequence Data</h2>
   {% render_table table %}
   <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src={% static 'js/colResizable-1.6.js' %}></script>
   <script type="text/javascript" src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.4/css/jquery.dataTables.min.css">
   <script type="text/javascript">
@@ -19,6 +20,12 @@
             "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ]
           }
         );
+        $('table').colResizable(
+          {
+            resizeMode: 'overflow',
+            liveDrag: true
+          }
+        );
       });
-      </script>
+  </script>
 {% endblock %}
